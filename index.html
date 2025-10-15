@@ -37,17 +37,27 @@
 
     <!-- Featured Courses -->
     <section class="courses">
-      <h2>Popular Courses</h2>
-      <div class="course-grid">
-        <div class="course-card" v-for="course in courses" :key="course.id">
-          <img :src="course.image" alt="course image">
-          <div class="info">
-            <h3>{{ course.title }}</h3>
-            <p>{{ course.category }}</p>
-            <div class="price">${{ course.price }}</div>
-          </div>
+      <!-- Popular Courses Section -->
+<section class="courses">
+  <h2>Popular Courses</h2>
+  <div class="course-grid">
+    <div class="course-card" v-for="course in courses" :key="course.id">
+      <img :src="course.image" :alt="course.title">
+      <div class="info">
+        <h3>{{ course.title }}</h3>
+        <p>{{ course.category }} • {{ course.instructor }}</p>
+        <div class="rating">
+          <span v-for="n in 5" :key="n">
+            <i class="fas fa-star" :class="n <= course.rating ? 'filled' : ''"></i>
+          </span>
+          <span class="rating-number">({{ course.rating }})</span>
         </div>
+        <div class="price">${{ course.price }}</div>
+        <button class="btn-view">View Course</button>
       </div>
+    </div>
+  </div>
+</section>
     </section>
 
     <!-- Footer -->
@@ -61,7 +71,7 @@
       el: '#app',
       data: {
         courses: [
-          { id: 1, title: 'Web Development Bootcamp', category: 'Development', price: 49.99, image: 'https://source.unsplash.com/300x200/?coding' },
+          { id: 1, title: 'Web Development Bootcamp', category: 'Development', price: 49.99, image:},
           { id: 2, title: 'UI/UX Design Masterclass', category: 'Design', price: 39.99, image: 'https://source.unsplash.com/300x200/?design' },
           { id: 3, title: 'Digital Marketing 101', category: 'Marketing', price: 29.99, image: 'https://source.unsplash.com/300x200/?marketing' },
           { id: 4, title: 'Python for Beginners', category: 'Programming', price: 59.99, image: 'https://source.unsplash.com/300x200/?python' },
