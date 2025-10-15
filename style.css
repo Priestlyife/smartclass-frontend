@@ -15,25 +15,46 @@ nav {
   padding: 15px 50px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+
 nav .logo {
   font-weight: bold;
   font-size: 22px;
   color: #333;
 }
+
 nav input {
   width: 40%;
   padding: 8px 15px;
   border: 1px solid #ccc;
   border-radius: 20px;
 }
+
 nav .menu {
   display: flex;
-  gap: 20px;
+  gap: 15px;
 }
+
+/* 🔹 Menu links styled with border */
 nav .menu a {
   text-decoration: none;
-  color: #555;
+  color: #333;
   font-weight: 600;
+  padding: 8px 15px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+/* 🔹 Hover effect */
+nav .menu a:hover {
+  border-color: #5f72be; /* violet border */
+  color: #5f72be;
+  background-color: #f4f2ff; /* soft background change */
+}
+
+/* Optional: make the cart icon button styled too */
+nav .menu a i {
+  font-size: 18px;
 }
 
 /* Hero Section */
