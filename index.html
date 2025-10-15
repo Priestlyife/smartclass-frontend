@@ -18,8 +18,7 @@
   <div id="app">
     <!-- Navbar -->
     <nav>
-      <div class="logo">SmartClass Online </div>
-      
+      <div class="logo">SmartClass Online</div>
       <div class="menu">
         <a href="#">Categories</a>
         <a href="#">Login</a>
@@ -36,43 +35,55 @@
     </section>
 
     <!-- Partner Companies -->
-<section class="partners">
-  <h2>Our Trusted Partners</h2>
-  <div class="partner-logos">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft">
-    <img src="https://sm.pcmag.com/pcmag_au/review/u/udemy/udemy_t1q8.jpg" alt="Udemy">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png" alt="Google">
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUJbxuh5HLL3yL8aWqeRbOKzD6u6nriF5CWQ&s" alt="IBM">
-    <img src="https://npr.brightspotcdn.com/legacy/sites/wxxi/files/201902/amazon_logo.png" alt="Amazon">
-  </div>
-</section>
-
-    <!-- Featured Courses -->
-    <section class="courses">
-      <!-- Popular Courses Section -->
-<section class="courses">
-  <h2>Popular Courses</h2>
-  <div class="course-grid">
-    <div class="course-card" v-for="course in courses" :key="course.id">
-      <img :src="course.image" :alt="course.title">
-      <div class="info">
-        <h3>{{ course.title }}</h3>
-        <p>{{ course.category }} • {{ course.instructor }}</p>
-        <div class="rating">
-          <span v-for="n in 5" :key="n">
-            <i class="fas fa-star" :class="n <= course.rating ? 'filled' : ''"></i>
-          </span>
-          <span class="rating-number">({{ course.rating }})</span>
-        </div>
-        <div class="price">${{ course.price }}</div>
-        <button class="btn-view">View Course</button>
+    <section class="partners">
+      <h2>Our Trusted Partners</h2>
+      <div class="partner-logos">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft">
+        <img src="https://sm.pcmag.com/pcmag_au/review/u/udemy/udemy_t1q8.jpg" alt="Udemy">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png" alt="Google">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUJbxuh5HLL3yL8aWqeRbOKzD6u6nriF5CWQ&s" alt="IBM">
+        <img src="https://npr.brightspotcdn.com/legacy/sites/wxxi/files/201902/amazon_logo.png" alt="Amazon">
       </div>
-    </div>
-  </div>
-</section>
     </section>
 
+    <!-- Popular Courses Section -->
+    <section class="courses">
+      <h2>Popular Courses</h2>
+      <div class="course-grid">
+        <div class="course-card" v-for="course in courses" :key="course.id">
+          <img :src="course.image" :alt="course.title">
+          <div class="info">
+            <h3>{{ course.title }}</h3>
+            <p>{{ course.category }} • {{ course.instructor }}</p>
+            <div class="rating">
+              <span v-for="n in 5" :key="n">
+                <i class="fas fa-star" :class="n <= course.rating ? 'filled' : ''"></i>
+              </span>
+              <span class="rating-number">({{ course.rating }})</span>
+            </div>
+            <div class="price">${{ course.price }}</div>
+            <button class="btn-view">View Course</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
+    <!-- Reviews Section -->
+    <section class="reviews">
+      <h2>What Our Users Say</h2>
+      <div class="review-cards">
+        <div class="review-card" v-for="review in reviews" :key="review.id">
+          <p>"{{ review.text }}"</p>
+          <div class="reviewer">
+            <img :src="review.avatar" :alt="review.name">
+            <div>
+              <h4>{{ review.name }}</h4>
+              <span>{{ review.course }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Footer -->
     <footer>
@@ -80,15 +91,22 @@
     </footer>
   </div>
 
+  <!-- Vue Data -->
   <script>
     new Vue({
       el: '#app',
       data: {
         courses: [
-          { id: 1, title: 'Web Development Bootcamp', category: 'Development', price: 49.99, image:'images/web development.jpg' },
-          { id: 2, title: 'UI/UX Design Masterclass', category: 'Design', price: 39.99, image: 'images/uii.jpg' },
-          { id: 3, title: 'Digital Marketing 101', category: 'Marketing', price: 29.99, image: 'images/digital marketing.png' },
-          { id: 4, title: 'Python for Beginners', category: 'Programming', price: 59.99, image: 'images/python.jpeg' },
+          { id: 1, title: 'Web Development Bootcamp', category: 'Development', instructor: 'John Doe', rating: 5, price: 49.99, image:'images/web development.jpg' },
+          { id: 2, title: 'UI/UX Design Masterclass', category: 'Design', instructor: 'Jane Smith', rating: 4, price: 39.99, image: 'images/uii.jpg' },
+          { id: 3, title: 'Digital Marketing 101', category: 'Marketing', instructor: 'Mike Johnson', rating: 4, price: 29.99, image: 'images/digital marketing.png' },
+          { id: 4, title: 'Python for Beginners', category: 'Programming', instructor: 'Emily Davis', rating: 5, price: 59.99, image: 'images/python.jpeg' },
+        ],
+        reviews: [
+          { id: 1, name: 'Alice Johnson', course: 'Web Development', avatar: 'https://randomuser.me/api/portraits/women/65.jpg', text: 'This platform helped me start my career in web development!' },
+          { id: 2, name: 'Mark Smith', course: 'UI/UX Design', avatar: 'https://randomuser.me/api/portraits/men/75.jpg', text: 'Amazing design courses, highly recommended!' },
+          { id: 3, name: 'Emily Davis', course: 'Digital Marketing', avatar: 'https://randomuser.me/api/portraits/women/68.jpg', text: 'I learned so much about marketing in just a few weeks.' },
+          { id: 4, name: 'James Wilson', course: 'Python Programming', avatar: 'https://randomuser.me/api/portraits/men/52.jpg', text: 'Python courses are easy to follow and very practical.' },
         ]
       }
     })
