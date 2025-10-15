@@ -80,6 +80,37 @@ nav .menu a i {
   outline: none;
 }
 
+/* Partners Section */
+.partners {
+  padding: 50px;
+  background: #fff;
+  text-align: center;
+}
+
+.partners h2 {
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.partner-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.partner-logos img {
+  height: 50px; /* small logos */
+  object-fit: contain;
+  transition: transform 0.3s;
+}
+
+.partner-logos img:hover {
+  transform: scale(1.1);
+}
+
 /* Courses Section */
 .courses {
   padding: 50px;
@@ -171,6 +202,8 @@ nav .menu a i {
 .btn-view:hover {
   background-color: #9921e8;
 }
+
+
 
 /* Footer */
 footer {
