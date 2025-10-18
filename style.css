@@ -358,6 +358,36 @@ nav .menu a:hover {
   background: #ff3b2f;
 }
 
+/* Courses Header */
+.courses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.courses-header h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: #333;
+}
+
+.btn-see-more {
+  background: #667eea;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-see-more:hover {
+  background: #5a67d8;
+}
+
 
 /* Reviews Section */
 .reviews {
