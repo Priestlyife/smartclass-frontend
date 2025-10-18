@@ -77,38 +77,43 @@
       </div>
     </section>
 
-    <!-- Popular Courses Section -->
-<section class="courses">
-  <h2>Popular Courses</h2>
+<!-- Popular Courses Section -->
+<section class="courses" id="courses">
+  <h2>Our Popular Courses</h2>
   <div class="course-grid">
     <div class="course-card" v-for="course in courses" :key="course.id">
       <img :src="course.image" :alt="course.title">
 
       <div class="info">
         <h3>{{ course.title }}</h3>
-        <p>{{ course.category }} • {{ course.instructor }}</p>
-        <div class="rating">
-          <span v-for="n in 5" :key="n">
-            <i class="fas fa-star" :class="n <= course.rating ? 'filled' : ''"></i>
-          </span>
-          <span class="rating-number">({{ course.rating }})</span>
+        <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
+
+        <div class="rating-box">
+          <span class="star">★</span>
+          {{ course.rating }}
+          <span class="review-count">({{ course.reviews }} ratings)</span>
         </div>
+
         <div class="price">${{ course.price }}</div>
       </div>
 
       <!-- Overlay -->
-      <div class="overlay">
-        <h4>{{ course.title }}</h4>
-        <p><strong>Bestseller</strong> • Updated Oct 2025</p>
-        <p>2h • All Levels • Subtitles</p>
-        <ul>
-          <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
-        </ul>
-        <button class="btn-cart">Add to Cart</button>
-      </div>
+<div class="overlay">
+  <h3 class="overlay-title">{{ course.title }}</h3>
+  <p class="overlay-subtitle"><strong>Bestseller</strong> • Updated Oct 2025</p>
+  <p class="overlay-info">2h • All Levels • Subtitles</p>
+  <ul class="overlay-details">
+    <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
+  </ul>
+  <div class="overlay-bottom">
+    <span class="overlay-price">${{ course.price }}</span>
+    <button class="btn-cart">Add to Cart</button>
+  </div>
+</div>
     </div>
   </div>
 </section>
+
 
     <!-- Reviews Section -->
     <section class="reviews">
