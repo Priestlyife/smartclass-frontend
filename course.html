@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Courses - SmartClass</title>
+  <link rel="stylesheet" href="course.css" />
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+</head>
+<body>
+  <!-- ✅ Header (same as index) -->
+  <header class="navbar">
+    <div class="logo">
+      <a href="index.html">SmartClass</a>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="course.html" class="active">Courses</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ✅ Courses Section -->
+  <section id="app" class="courses-section">
+    <h2>All Courses</h2>
+
+    <div class="filter-bar">
+      <input 
+        type="text" 
+        v-model="searchQuery" 
+        placeholder="Search courses..." 
+        class="search-input"
+      />
+
+      <select v-model="selectedCategory" class="filter-select">
+        <option value="All">All Categories</option>
+        <option value="Development">Development</option>
+        <option value="Design">Design</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Business">Business</option>
+      </select>
+    </div>
+
+    <div class="courses-container">
+      <div class="course-box" v-for="course in filteredCourses" :key="course.id">
+        <img :src="course.image" :alt="course.title">
+        <div class="course-info">
+          <h3>{{ course.title }}</h3>
+          <p class="instructor">{{ course.instructor }}</p>
+
+          <div class="rating">
+            <span class="star">★</span> {{ course.rating }}
+            <span class="review-count">({{ course.reviews }} ratings)</span>
+          </div>
+
+          <p class="price">${{ course.price }}</p>
+        </div>
+
+        <div class="overlay">
+          <div class="overlay-content">
+            <h4>{{ course.title }}</h4>
+            <p><strong>Bestseller</strong> • Updated Oct 2025</p>
+            <p>2h • All Levels • Subtitles</p>
+            <button class="add-btn">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        searchQuery: '',
+        selectedCategory: 'All',
+        courses: [
+          { id: 1, title: 'Web Development Bootcamp', instructor: 'John Doe', rating: 4.8, reviews: 12500, price: 49.99, category: 'Development', image: 'https://picsum.photos/300/200?1' },
+          { id: 2, title: 'Graphic Design Masterclass', instructor: 'Jane Smith', rating: 4.6, reviews: 8300, price: 39.99, category: 'Design', image: 'https://picsum.photos/300/200?2' },
+          { id: 3, title: 'Digital Marketing 101', instructor: 'Michael Brown', rating: 4.7, reviews: 9100, price: 29.99, category: 'Marketing', image: 'https://picsum.photos/300/200?3' },
+          { id: 4, title: 'Python for Beginners', instructor: 'Sara White', rating: 4.9, reviews: 15400, price: 59.99, category: 'Development', image: 'https://picsum.photos/300/200?4' },
+          { id: 5, title: 'UI/UX Design Principles', instructor: 'David Lee', rating: 4.5, reviews: 6200, price: 34.99, category: 'Design', image: 'https://picsum.photos/300/200?5' },
+          { id: 6, title: 'Business Strategy Essentials', instructor: 'Alice Johnson', rating: 4.7, reviews: 7500, price: 44.99, category: 'Business', image: 'https://picsum.photos/300/200?6' },
+          { id: 7, title: 'React.js Crash Course', instructor: 'Chris Evans', rating: 4.8, reviews: 9700, price: 49.99, category: 'Development', image: 'https://picsum.photos/300/200?7' },
+          { id: 8, title: 'Photography Basics', instructor: 'Emily Parker', rating: 4.6, reviews: 5400, price: 24.99, category: 'Design', image: 'https://picsum.photos/300/200?8' },
+          { id: 9, title: 'SEO Mastery', instructor: 'Tom Wilson', rating: 4.7, reviews: 8100, price: 29.99, category: 'Marketing', image: 'https://picsum.photos/300/200?9' },
+          { id: 10, title: 'Entrepreneurship 101', instructor: 'Laura Green', rating: 4.8, reviews: 9200, price: 54.99, category: 'Business', image: 'https://picsum.photos/300/200?10' },
+        ]
+      },
+      computed: {
+        filteredCourses() {
+          return this.courses.filter(course => {
+            const matchesSearch = course.title.toLowerCase().includes(this.searchQuery.toLowerCase());
+            const matchesCategory = this.selectedCategory === 'All' || course.category === this.selectedCategory;
+            return matchesSearch && matchesCategory;
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>

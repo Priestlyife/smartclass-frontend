@@ -192,7 +192,7 @@ nav .menu a:hover {
 
 /* Courses Section */
 .courses {
-  padding: 60px 20px;
+  padding: 80px 40px;
 }
 
 .courses h2 {
@@ -373,7 +373,7 @@ nav .menu a:hover {
   color: #333;
 }
 
-.btn-see-more {
+.see-more-btn {
   background: #667eea;
   color: #fff;
   border: none;
@@ -384,7 +384,7 @@ nav .menu a:hover {
   transition: background 0.3s;
 }
 
-.btn-see-more:hover {
+.see-more-btn:hover {
   background: #5a67d8;
 }
 
@@ -473,3 +473,4 @@ footer {
     gap: 25px;
   }
 }
+
