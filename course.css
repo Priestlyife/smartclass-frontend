@@ -160,3 +160,35 @@ nav ul li a.active {
   font-weight: 700;
   margin-top: 8px;
 }
+
+/* Search + Filter Bar */
+.filter-bar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.search-input, .filter-select {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.add-btn {
+  background: #4c51bf;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.add-btn:hover {
+  background: #434190;
+}

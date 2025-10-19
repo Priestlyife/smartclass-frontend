@@ -30,11 +30,10 @@
             <li><a href="#" class="nav-link">About</a></li>
             <li><a href="#" class="nav-link">Contact</a></li>
             <li>
-  <a href="cart.html" class="signup-btn">
-    <i class="fas fa-shopping-cart"></i> Cart
-  </a>
-</li>
-            <li><a href="signup.html" class="signup-btn">Sign Up</a></li>
+              <a href="cart.html" class="signup-btn">
+                <i class="fas fa-shopping-cart"></i> Cart
+              </a>
+            </li>
           </ul>
         </nav>
       </div>
@@ -46,36 +45,40 @@
       <p>Browse our complete collection of high-quality learning programs designed for your growth.</p>
     </section>
 
-    <!-- All Courses Grid -->
-    <section class="courses" id="courses">
-      <div class="course-grid">
-        <div class="course-card" v-for="course in courses" :key="course.id">
-          <img :src="course.image" :alt="course.title">
+    <!-- Filter & Search -->
+    <section class="courses-section">
+      <div class="filter-bar">
+        <input type="text" v-model="searchQuery" placeholder="Search courses..." class="search-input">
+        
+        <select v-model="filterCategory" class="filter-select">
+          <option value="">All Categories</option>
+          <option v-for="cat in categories" :key="cat">{{ cat }}</option>
+        </select>
 
-          <div class="info">
+        <select v-model="sortOption" class="filter-select">
+          <option value="">Sort By</option>
+          <option value="rating">Best Rating</option>
+          <option value="priceLow">Price: Low to High</option>
+          <option value="priceHigh">Price: High to Low</option>
+        </select>
+
+        <button v-if="searchQuery || filterCategory || sortOption" @click="clearFilters" class="add-btn">
+          ✕ Clear
+        </button>
+      </div>
+
+      <!-- Courses Grid -->
+      <div class="courses-container">
+        <div class="course-box" v-for="course in filteredCourses" :key="course.id">
+          <img :src="course.image" :alt="course.title">
+          <div class="course-info">
             <h3>{{ course.title }}</h3>
             <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
-
-            <div class="rating-box">
-              <span class="star">★</span>
-              {{ course.rating }}
-              <span class="review-count">({{ course.reviews }} ratings)</span>
+            <div class="rating">
+              <span class="star">★</span> {{ course.rating }} 
             </div>
-
             <div class="price">${{ course.price }}</div>
-          </div>
-
-          <div class="overlay">
-            <h4>{{ course.title }}</h4>
-            <p><strong>Bestseller</strong> • Updated Oct 2025</p>
-            <p>2h • All Levels • Subtitles</p>
-            <ul>
-              <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
-            </ul>
-            <div class="overlay-bottom">
-              <span class="overlay-price">${{ course.price }}</span>
-              <button class="btn-cart">Add to Cart</button>
-            </div>
+            <button class="add-btn">Add to Cart</button>
           </div>
         </div>
       </div>
@@ -92,28 +95,58 @@
     new Vue({
       el: '#app',
       data: {
+        searchQuery: '',
+        filterCategory: '',
+        sortOption: '',
         courses: [
-          { id: 1, title: 'Web Development Bootcamp', category: 'Development', instructor: 'John Doe', rating: 4.8, reviews: 10200, price: 49.99, image: 'images/web development.jpg', details: ['HTML, CSS, JS', 'Real projects', 'Deploy professionally'] },
-          { id: 2, title: 'UI/UX Design Masterclass', category: 'Design', instructor: 'Jane Smith', rating: 4.6, reviews: 8500, price: 39.99, image: 'images/uii.jpg', details: ['Master Figma', 'User-centered design', 'Portfolio-ready'] },
-          { id: 3, title: 'Digital Marketing 101', category: 'Marketing', instructor: 'Mike Johnson', rating: 4.7, reviews: 7200, price: 29.99, image: 'images/digital marketing.png', details: ['SEO & Social Media', 'Email Marketing', 'Ad Strategies'] },
-          { id: 4, title: 'Python for Beginners', category: 'Programming', instructor: 'Emily Davis', rating: 4.9, reviews: 9300, price: 59.99, image: 'images/python.jpeg', details: ['Python Basics', 'Automation', 'Mini Projects'] },
-          { id: 5, title: 'Graphic Design Fundamentals', category: 'Design', instructor: 'Lara White', rating: 4.5, reviews: 6800, price: 34.99, image: 'images/graphic.jpg', details: ['Color Theory', 'Typography', 'Adobe Tools'] },
-          { id: 6, title: 'Mobile App Development', category: 'Development', instructor: 'Chris Evans', rating: 4.7, reviews: 8900, price: 54.99, image: 'images/mobile.jpg', details: ['Flutter', 'Android/iOS', 'Deployment'] },
-          { id: 7, title: 'Data Science with Python', category: 'Programming', instructor: 'Olivia Green', rating: 4.9, reviews: 12000, price: 69.99, image: 'images/data.jpg', details: ['Pandas & NumPy', 'Data Visualization', 'Machine Learning Intro'] },
-          { id: 8, title: 'Video Editing Masterclass', category: 'Multimedia', instructor: 'Kevin Lee', rating: 4.6, reviews: 5400, price: 44.99, image: 'images/video.jpg', details: ['Premiere Pro', 'After Effects', 'Color Correction'] },
-          { id: 9, title: 'Photography Essentials', category: 'Art', instructor: 'Sophia Brown', rating: 4.5, reviews: 6200, price: 24.99, image: 'images/photo.jpg', details: ['Camera Settings', 'Lighting', 'Editing Basics'] },
-          { id: 10, title: 'Business Strategy', category: 'Business', instructor: 'Mark Benson', rating: 4.8, reviews: 4100, price: 49.99, image: 'images/business.jpg', details: ['Market Analysis', 'Branding', 'Growth Strategy'] },
-          { id: 11, title: 'Cybersecurity Basics', category: 'IT & Security', instructor: 'Tina Blake', rating: 4.7, reviews: 7000, price: 39.99, image: 'images/cyber.jpg', details: ['Network Security', 'Ethical Hacking', 'System Protection'] },
-          { id: 12, title: 'AI & Machine Learning', category: 'Programming', instructor: 'Brian Holt', rating: 4.9, reviews: 13000, price: 79.99, image: 'images/ai.jpg', details: ['Neural Networks', 'ML Models', 'AI in Practice'] },
-          { id: 13, title: 'Content Writing Pro', category: 'Marketing', instructor: 'Linda Fox', rating: 4.5, reviews: 5100, price: 29.99, image: 'images/writing.jpg', details: ['Storytelling', 'SEO Writing', 'Copywriting'] },
-          { id: 14, title: 'Excel for Beginners', category: 'Office Tools', instructor: 'Andrew Cole', rating: 4.4, reviews: 6200, price: 19.99, image: 'images/excel.jpg', details: ['Formulas', 'Charts', 'Data Management'] },
-          { id: 15, title: 'React JS from Scratch', category: 'Web Development', instructor: 'Tom Walker', rating: 4.8, reviews: 9000, price: 59.99, image: 'images/react.jpg', details: ['Components', 'Hooks', 'Projects'] },
-          { id: 16, title: 'Music Production Basics', category: 'Music', instructor: 'Ella Reed', rating: 4.6, reviews: 4800, price: 34.99, image: 'images/music.jpg', details: ['Mixing', 'Beats', 'Audio Editing'] },
-          { id: 17, title: 'Financial Accounting', category: 'Finance', instructor: 'David King', rating: 4.7, reviews: 5100, price: 44.99, image: 'images/finance.jpg', details: ['Bookkeeping', 'Balance Sheets', 'Financial Analysis'] },
-          { id: 18, title: 'Public Speaking Mastery', category: 'Communication', instructor: 'Sarah Bell', rating: 4.8, reviews: 4600, price: 39.99, image: 'images/speaking.jpg', details: ['Confidence', 'Speech Craft', 'Audience Control'] },
-          { id: 19, title: 'Project Management', category: 'Business', instructor: 'Paul Gray', rating: 4.7, reviews: 5300, price: 49.99, image: 'images/project.jpg', details: ['Agile & Scrum', 'Leadership', 'Time Management'] },
-          { id: 20, title: 'Language Learning: Spanish', category: 'Language', instructor: 'Ana Lopez', rating: 4.5, reviews: 4900, price: 29.99, image: 'images/spanish.jpg', details: ['Vocabulary', 'Grammar', 'Conversational Skills'] }
+          { id: 1, title: 'Web Development Bootcamp', category: 'Development', instructor: 'John Doe', rating: 4.8, price: 49.99, image: 'images/web development.jpg' },
+          { id: 2, title: 'UI/UX Design Masterclass', category: 'Design', instructor: 'Jane Smith', rating: 4.6, price: 39.99, image: 'images/uii.jpg' },
+          { id: 3, title: 'Digital Marketing 101', category: 'Marketing', instructor: 'Mike Johnson', rating: 4.7, price: 29.99, image: 'images/digital marketing.png' },
+          { id: 4, title: 'Python for Beginners', category: 'Programming', instructor: 'Emily Davis', rating: 4.9, price: 59.99, image: 'images/python.jpeg' },
+          { id: 5, title: 'Graphic Design Fundamentals', category: 'Design', instructor: 'Lara White', rating: 4.5, price: 34.99, image: 'images/graphic.jpg' },
+          { id: 6, title: 'Mobile App Development', category: 'Development', instructor: 'Chris Evans', rating: 4.7, price: 54.99, image: 'images/mobile.jpg' },
+          { id: 7, title: 'Data Science with Python', category: 'Programming', instructor: 'Olivia Green', rating: 4.9, price: 69.99, image: 'images/data.jpg' }
         ]
+      },
+      computed: {
+        categories() {
+          const cats = this.courses.map(c => c.category);
+          return [...new Set(cats)];
+        },
+        filteredCourses() {
+          let result = this.courses;
+
+          // SEARCH
+          if (this.searchQuery) {
+            const q = this.searchQuery.toLowerCase();
+            const exactTitle = [], partialTitle = [], categoryMatch = [];
+            result.forEach(c => {
+              const titleLower = c.title.toLowerCase();
+              const categoryLower = c.category.toLowerCase();
+              if (titleLower === q) exactTitle.push(c);
+              else if (titleLower.includes(q)) partialTitle.push(c);
+              else if (categoryLower.includes(q)) categoryMatch.push(c);
+            });
+            result = [...exactTitle, ...partialTitle, ...categoryMatch];
+          }
+
+          // FILTER
+          if (this.filterCategory) result = result.filter(c => c.category === this.filterCategory);
+
+          // SORT
+          if (this.sortOption === 'rating') result.sort((a,b) => b.rating - a.rating);
+          else if (this.sortOption === 'priceLow') result.sort((a,b) => a.price - b.price);
+          else if (this.sortOption === 'priceHigh') result.sort((a,b) => b.price - a.price);
+
+          return result;
+        }
+      },
+      methods: {
+        clearFilters() {
+          this.searchQuery = '';
+          this.filterCategory = '';
+          this.sortOption = '';
+        }
       }
     });
   </script>
