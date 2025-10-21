@@ -10,149 +10,189 @@
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
 
   <!-- CSS -->
   <link rel="stylesheet" href="style.css">
+
+  <style>
+    .cart-badge {
+      background: #ff3b2f;
+      color: #fff;
+      border-radius: 50%;
+      padding: 3px 8px;
+      font-size: 12px;
+      margin-left: 6px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #4c51bf;
+      color: white;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s ease;
+      z-index: 2000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.error {
+      background: #ff3b2f;
+    }
+  </style>
 </head>
 <body>
   <div id="app">
-  <!-- Navbar -->
-  <header class="navbar">
-    <div class="container">
-      <div class="logo">
-        <a href="index.html">SmartClass</a>
-      </div>
-
-      <nav>
-        <ul class="nav-list">
-          <li><a href="index.html" class="nav-link">Home</a></li>
-          <li><a href="course.html" class="nav-link">Courses</a></li>
-          <li><a href="#" class="nav-link">About</a></li>
-          <li><a href="#" class="nav-link">Contact</a></li>
-          <a href="cart.html" class="signup-btn">
-    <i class="fas fa-shopping-cart"></i> Cart
-  </a>
-</li>
-          <!-- <li><a href="signup.html" class="signup-btn">Sign Up</a></li> -->
-        </ul>
-      </nav>
-    </div>
-  </header>
-
-  <!-- Hero -->
-  <section class="hero">
-    <h1>Upgrade Your Skills, Transform Your Future</h1>
-    <p>Join thousands of learners mastering new skills in technology, design, and business — all from the comfort of your home.</p>
-
-    <div class="search-bar">
-      <input type="text" placeholder="Search for courses, topics, or instructors...">
-      <button>Search</button>
-    </div>
-  </section>
-
-  
-<!-- Why Choose SmartClass Section -->
-<section class="services">
-  <h2>Why Choose SmartClass</h2>
-  <div class="service-cards">
-    <div class="service-card">
-      <i class="fas fa-chalkboard-teacher"></i>
-      <h3>Expert Tutors</h3>
-      <p>Learn from experienced educators who make learning fun and effective.</p>
-    </div>
-    <div class="service-card">
-      <i class="fas fa-book-open"></i>
-      <h3>Comprehensive Courses</h3>
-      <p>Access well-structured courses that cover all key topics thoroughly.</p>
-    </div>
-    <div class="service-card">
-      <i class="fas fa-clock"></i>
-      <h3>Flexible Schedule</h3>
-      <p>Learn at your own pace, anytime and anywhere, on any device.</p>
-    </div>
-    <div class="service-card">
-      <i class="fas fa-award"></i>
-      <h3>Certifications</h3>
-      <p>Earn certificates that showcase your skills and boost your career.</p>
-    </div>
-  </div>
-</section>
-
-
-
-  <!-- Partners -->
-  <section class="partners">
-    <h2>Our Trusted Partners</h2>
-    <div class="partner-logos">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft">
-      <img src="https://sm.pcmag.com/pcmag_au/review/u/udemy/udemy_t1q8.jpg" alt="Udemy">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png" alt="Google">
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUJbxuh5HLL3yL8aWqeRbOKzD6u6nriF5CWQ&s" alt="IBM">
-      <img src="https://npr.brightspotcdn.com/legacy/sites/wxxi/files/201902/amazon_logo.png" alt="Amazon">
-    </div>
-  </section>
-
-  <!-- Courses -->
-  <section class="courses" id="courses">
-    <div class="courses-header">
-      <h2>Our Popular Courses</h2>
-      <a href="course.html" class="see-more-btn">See More</a>
-    </div>
-
-    <div class="course-grid">
-      <div class="course-card" v-for="course in courses" :key="course.id">
-        <img :src="course.image" :alt="course.title">
-        <div class="info">
-          <h3>{{ course.title }}</h3>
-          <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
-
-          <div class="rating-box">
-            <span class="star">★</span>
-            {{ course.rating }}
-            <span class="review-count">({{ course.reviews }} ratings)</span>
-          </div>
-
-          <div class="price">${{ course.price }}</div>
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="container">
+        <div class="logo">
+          <a href="index.html">SmartClass</a>
         </div>
-
-        <div class="overlay">
-          <h4>{{ course.title }}</h4>
-          <p><strong>Bestseller</strong> • Updated Oct 2025</p>
-          <p>2h • All Levels • Subtitles</p>
-          <ul>
-            <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
+        <nav>
+          <ul class="nav-list">
+            <li><a href="index.html" class="nav-link active">Home</a></li>
+            <li><a href="course.html" class="nav-link">Courses</a></li>
+            <li><a href="#" class="nav-link">About</a></li>
+            <li><a href="#" class="nav-link">Contact</a></li>
+            <li>
+              <a href="cart.html" class="signup-btn" @click.prevent="goToCart">
+                <i class="fas fa-shopping-cart"></i> Cart
+                <span v-if="cart.length > 0" class="cart-badge">{{ cart.length }}</span>
+              </a>
+            </li>
           </ul>
-          <div class="overlay-bottom">
-            <span class="overlay-price">${{ course.price }}</span>
-            <button class="btn-cart">Add to Cart</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <h1>Upgrade Your Skills, Transform Your Future</h1>
+      <p>Join thousands of learners mastering new skills in technology, design, and business — all from the comfort of your home.</p>
+
+      <div class="search-bar">
+        <input type="text" placeholder="Search for courses, topics, or instructors..." v-model="searchQuery" @keyup.enter="searchCourses">
+        <button @click="searchCourses">Search</button>
+      </div>
+    </section>
+
+    <!-- Why Choose SmartClass -->
+    <section class="services">
+      <h2>Why Choose SmartClass</h2>
+      <div class="service-cards">
+        <div class="service-card">
+          <i class="fas fa-chalkboard-teacher"></i>
+          <h3>Expert Tutors</h3>
+          <p>Learn from experienced educators who make learning fun and effective.</p>
+        </div>
+        <div class="service-card">
+          <i class="fas fa-book-open"></i>
+          <h3>Comprehensive Courses</h3>
+          <p>Access well-structured courses that cover all key topics thoroughly.</p>
+        </div>
+        <div class="service-card">
+          <i class="fas fa-clock"></i>
+          <h3>Flexible Schedule</h3>
+          <p>Learn at your own pace, anytime and anywhere, on any device.</p>
+        </div>
+        <div class="service-card">
+          <i class="fas fa-award"></i>
+          <h3>Certifications</h3>
+          <p>Earn certificates that showcase your skills and boost your career.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Partners -->
+    <section class="partners">
+      <h2>Our Trusted Partners</h2>
+      <div class="partner-logos">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft">
+        <img src="https://sm.pcmag.com/pcmag_au/review/u/udemy/udemy_t1q8.jpg" alt="Udemy">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png" alt="Google">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUJbxuh5HLL3yL8aWqeRbOKzD6u6nriF5CWQ&s" alt="IBM">
+        <img src="https://npr.brightspotcdn.com/legacy/sites/wxxi/files/201902/amazon_logo.png" alt="Amazon">
+      </div>
+    </section>
+
+    <!-- Popular Courses -->
+    <section class="courses" id="courses">
+      <div class="courses-header">
+        <h2>Our Popular Courses</h2>
+        <a href="course.html" class="see-more-btn">See More</a>
+      </div>
+
+      <div class="course-grid">
+        <div class="course-card" v-for="course in courses" :key="course.id">
+          <img :src="course.image" :alt="course.title">
+          <div class="info">
+            <h3>{{ course.title }}</h3>
+            <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
+
+            <div class="rating-box">
+              <span class="star">★</span>
+              {{ course.rating }}
+              <span class="review-count">({{ course.reviews }} ratings)</span>
+            </div>
+
+            <div class="price">${{ course.price }}</div>
+          </div>
+
+          <div class="overlay">
+            <h4>{{ course.title }}</h4>
+            <p><strong>Bestseller</strong> • Updated Oct 2025</p>
+            <p>2h • All Levels • Subtitles</p>
+            <ul>
+              <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
+            </ul>
+            <div class="overlay-bottom">
+              <span class="overlay-price">${{ course.price }}</span>
+              <button class="btn-cart" @click="addToCart(course)">Add to Cart</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Reviews -->
-  <section class="reviews">
-    <h2>What Our Users Say</h2>
-    <div class="review-cards">
-      <div class="review-card" v-for="review in reviews" :key="review.id">
-        <p>"{{ review.text }}"</p>
-        <div class="reviewer">
-          <img :src="review.avatar" :alt="review.name">
-          <div>
-            <h4>{{ review.name }}</h4>
-            <span>{{ review.course }}</span>
+    <!-- Reviews -->
+    <section class="reviews">
+      <h2>What Our Users Say</h2>
+      <div class="review-cards">
+        <div class="review-card" v-for="review in reviews" :key="review.id">
+          <p>"{{ review.text }}"</p>
+          <div class="reviewer">
+            <img :src="review.avatar" :alt="review.name">
+            <div>
+              <h4>{{ review.name }}</h4>
+              <span>{{ review.course }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Footer -->
-  <footer>
-    &copy; 2025 SmartClass. All rights reserved.
-  </footer>
+    <!-- Toast -->
+    <div v-if="toastMessage" :class="['toast', toastType, { show: showToast }]">
+      {{ toastMessage }}
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      &copy; 2025 SmartClass. All rights reserved.
+    </footer>
   </div>
 
   <!-- Vue Script -->
@@ -160,6 +200,11 @@
     new Vue({
       el: '#app',
       data: {
+        searchQuery: '',
+        cart: JSON.parse(localStorage.getItem('cart')) || [],
+        toastMessage: '',
+        showToast: false,
+        toastType: '',
         courses: [
           { id: 1, title: 'Web Development Bootcamp', category: 'Development', instructor: 'John Doe', rating: 4.8, reviews: 10200, price: 49.99, image: 'images/web development.jpg', details: ['HTML, CSS, JS', 'Real projects', 'Deploy professionally'] },
           { id: 2, title: 'UI/UX Design Masterclass', category: 'Design', instructor: 'Jane Smith', rating: 4.6, reviews: 8500, price: 39.99, image: 'images/uii.jpg', details: ['Master Figma', 'User-centered design', 'Portfolio-ready'] },
@@ -172,22 +217,46 @@
           { id: 3, name: 'Emily Davis', course: 'Digital Marketing', avatar: 'https://randomuser.me/api/portraits/women/68.jpg', text: 'I learned so much about marketing in just a few weeks.' },
           { id: 4, name: 'James Wilson', course: 'Python Programming', avatar: 'https://randomuser.me/api/portraits/men/52.jpg', text: 'Python courses are easy to follow and very practical.' }
         ]
+      },
+      methods: {
+        showNotification(message, type = '') {
+          this.toastMessage = message;
+          this.toastType = type;
+          this.showToast = true;
+          setTimeout(() => {
+            this.showToast = false;
+          }, 3000);
+        },
+
+        searchCourses() {
+          if (this.searchQuery.trim() === '') {
+            this.showNotification('Please enter a course name to search', 'error');
+            return;
+          }
+          localStorage.setItem('searchQuery', this.searchQuery.trim());
+          window.location.href = 'course.html';
+        },
+
+        addToCart(course) {
+          const exists = this.cart.find(item => item.id === course.id);
+          if (exists) {
+            this.showNotification(`${course.title} is already in your cart.`, 'error');
+            return;
+          }
+          this.cart.push(course);
+          localStorage.setItem('cart', JSON.stringify(this.cart));
+          this.showNotification(`${course.title} added to cart!`);
+        },
+
+        goToCart() {
+          if (this.cart.length === 0) {
+            this.showNotification('Your cart is empty.', 'error');
+            return;
+          }
+          window.location.href = 'cart.html';
+        }
       }
     });
   </script>
-
-  <script>
-  document.querySelector('.search-bar button').addEventListener('click', function() {
-    const searchQuery = document.querySelector('.search-bar input').value.trim();
-    if (searchQuery) {
-      // Save search term to localStorage
-      localStorage.setItem('searchQuery', searchQuery);
-      // Redirect to course.html
-      window.location.href = 'course.html';
-    } else {
-      alert('Please enter a course name to search');
-    }
-  });
-</script>
 </body>
 </html>

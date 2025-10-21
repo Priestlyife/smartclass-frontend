@@ -14,6 +14,57 @@
   <!-- CSS -->
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="course.css">
+  <style>
+    /* small badge style if not already in your css */
+    .cart-badge {
+      background: #ff3b2f;
+      color: #fff;
+      border-radius: 50%;
+      padding: 3px 8px;
+      font-size: 12px;
+      margin-left: 6px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    /* "Showing results" text */
+    .search-meta {
+      max-width: 1200px;
+      margin: 0 auto 12px;
+      padding: 0 20px;
+      color: #444;
+      font-weight: 600;
+    }
+  </style>
+
+  <style>
+
+  /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #4c51bf;
+      color: white;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s ease;
+      z-index: 2000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.error {
+      background: #ff3b2f;
+    }
+  </style>
 </head>
 <body>
   <div id="app">
@@ -31,8 +82,10 @@
             <li><a href="#" class="nav-link">About</a></li>
             <li><a href="#" class="nav-link">Contact</a></li>
             <li>
-              <a href="cart.html" class="signup-btn">
+              <!-- cart link uses click handler to prevent navigation when empty -->
+              <a href="cart.html" class="signup-btn" @click.prevent="goToCart">
                 <i class="fas fa-shopping-cart"></i> Cart
+                <span v-if="cart.length > 0" class="cart-badge">{{ cart.length }}</span>
               </a>
             </li>
           </ul>
@@ -70,75 +123,86 @@
         <button @click="searchCourses">Search</button>
       </div>
     </section>
-    
+
+    <!-- show meta when searching -->
+    <div v-if="searchQuery.trim() !== ''" class="search-meta">
+      Showing {{ filteredCourses.length }} result<span v-if="filteredCourses.length !== 1">s</span> for "<strong>{{ searchQuery }}</strong>"
+    </div>
 
     <!-- All Courses Section -->
-<section class="courses" id="courses">
+    <section class="courses" id="courses">
 
-  <!-- No Courses Found -->
-  <div v-if="filteredCourses.length === 0" class="no-course">
-    ❌ Course not available for now.
-  </div>
+      <!-- No Courses Found -->
+      <div v-if="filteredCourses.length === 0" class="no-course">
+        ❌ Course not available for now.
+      </div>
 
-  <!-- Search Results -->
-  <div v-else-if="searchQuery.trim() !== ''" class="search-results">
-    <div class="course-card" v-for="course in filteredCourses" :key="course.id">
-      <img :src="course.image" :alt="course.title">
-      <div class="info">
-        <h3>{{ course.title }}</h3>
-        <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
-        <div class="rating-box">
-          <span class="star">★</span>
-          {{ course.rating }}
-          <span class="review-count">({{ course.reviews }} ratings)</span>
+      <!-- Search Results -->
+      <div v-else-if="searchQuery.trim() !== ''" class="search-results">
+        <div class="course-card" v-for="course in filteredCourses" :key="course.id">
+          <img :src="course.image" :alt="course.title">
+          <div class="info">
+            <h3>{{ course.title }}</h3>
+            <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
+            <div class="rating-box">
+              <span class="star">★</span>
+              {{ course.rating }}
+              <span class="review-count">({{ course.reviews }} ratings)</span>
+            </div>
+            <div class="price">${{ course.price }}</div>
+          </div>
+
+          <div class="overlay">
+            <h4>{{ course.title }}</h4>
+            <p><strong>Bestseller</strong> • Updated Oct 2025</p>
+            <p>2h • All Levels • Subtitles</p>
+            <ul>
+              <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
+            </ul>
+            <div class="overlay-bottom">
+              <span class="overlay-price">${{ course.price }}</span>
+              <button class="btn-cart" @click="addToCart(course)">Add to Cart</button>
+            </div>
+          </div>
         </div>
-        <div class="price">${{ course.price }}</div>
       </div>
-      <div class="overlay">
-        <h4>{{ course.title }}</h4>
-        <p><strong>Bestseller</strong> • Updated Oct 2025</p>
-        <p>2h • All Levels • Subtitles</p>
-        <ul>
-          <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
-        </ul>
-        <div class="overlay-bottom">
-          <span class="overlay-price">${{ course.price }}</span>
-          <button class="btn-cart">Add to Cart</button>
+
+      <!-- All Courses Grid -->
+      <div v-else class="course-grid">
+        <div class="course-card" v-for="course in filteredCourses" :key="course.id">
+          <img :src="course.image" :alt="course.title">
+          <div class="info">
+            <h3>{{ course.title }}</h3>
+            <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
+            <div class="rating-box">
+              <span class="star">★</span>
+              {{ course.rating }}
+              <span class="review-count">({{ course.reviews }} ratings)</span>
+            </div>
+            <div class="price">${{ course.price }}</div>
+          </div>
+
+          <div class="overlay">
+            <h4>{{ course.title }}</h4>
+            <p><strong>Bestseller</strong> • Updated Oct 2025</p>
+            <p>2h • All Levels • Subtitles</p>
+            <ul>
+              <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
+            </ul>
+            <div class="overlay-bottom">
+              <span class="overlay-price">${{ course.price }}</span>
+              <button class="btn-cart" @click="addToCart(course)">Add to Cart</button>
+            </div>
+          </div>
         </div>
       </div>
+
+    </section>
+
+    <!-- Toast -->
+    <div v-if="toastMessage" :class="['toast', toastType, { show: showToast }]">
+      {{ toastMessage }}
     </div>
-  </div>
-
-  <!-- All Courses Grid -->
-  <div v-else class="course-grid">
-    <div class="course-card" v-for="course in filteredCourses" :key="course.id">
-      <img :src="course.image" :alt="course.title">
-      <div class="info">
-        <h3>{{ course.title }}</h3>
-        <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
-        <div class="rating-box">
-          <span class="star">★</span>
-          {{ course.rating }}
-          <span class="review-count">({{ course.reviews }} ratings)</span>
-        </div>
-        <div class="price">${{ course.price }}</div>
-      </div>
-      <div class="overlay">
-        <h4>{{ course.title }}</h4>
-        <p><strong>Bestseller</strong> • Updated Oct 2025</p>
-        <p>2h • All Levels • Subtitles</p>
-        <ul>
-          <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
-        </ul>
-        <div class="overlay-bottom">
-          <span class="overlay-price">${{ course.price }}</span>
-          <button class="btn-cart">Add to Cart</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</section>
 
     <!-- Footer -->
     <footer>
@@ -154,6 +218,7 @@
         searchQuery: '',
         selectedCategory: '',
         selectedSort: '',
+        cart: JSON.parse(localStorage.getItem('cart')) || [],
         courses: [
   // --- Development ---
   { id: 1, title: 'Web Development Bootcamp', category: 'Development', instructor: 'John Doe', rating: 4.8, reviews: 10200, price: 49.99, image: 'images/web development.jpg', details: ['HTML, CSS, JS', 'Real projects', 'Deploy professionally'] },
@@ -192,6 +257,8 @@
         filteredCourses() {
   let filtered = this.courses;
 
+  
+
   // Filter by category if selected
   if (this.selectedCategory) {
     filtered = filtered.filter(c => c.category === this.selectedCategory);
@@ -228,14 +295,63 @@
         },
         searchCourses() {
           // reactivity handles this automatically
+        },
+
+        // ADD TO CART LOGIC
+        addToCart(course) {
+          // initialize cart if missing
+          if (!Array.isArray(this.cart)) this.cart = [];
+
+          // check if course already in cart (by id)
+          const exists = this.cart.find(item => item.id === course.id);
+          if (exists) {
+            alert(`${course.title} is already in your cart.`);
+            return;
+          }
+
+          // push trimmed object (avoid adding huge structures)
+          const toAdd = {
+            id: course.id,
+            title: course.title,
+            price: course.price,
+            category: course.category,
+            instructor: course.instructor,
+            image: course.image
+          };
+          this.cart.push(toAdd);
+          localStorage.setItem('cart', JSON.stringify(this.cart));
+
+          // brief visual feedback
+          alert(`${course.title} has been added to your cart.`);
+        },
+
+        // NAVIGATE TO CART (prevent if empty)
+        goToCart() {
+          if (!this.cart || this.cart.length === 0) {
+            alert('Your cart is empty. Add a course first.');
+            // stay on page
+            return;
+          }
+          // go to cart page
+          window.location.href = 'cart.html';
         }
       },
       mounted() {
+        // load cart from localStorage (if any)
+        const stored = localStorage.getItem('cart');
+        if (stored) {
+          try {
+            this.cart = JSON.parse(stored) || [];
+          } catch(e) {
+            this.cart = [];
+          }
+        }
+
+        // restore searchQuery (if user searched from index and saved to localStorage)
         const savedQuery = localStorage.getItem('searchQuery');
         if (savedQuery) {
           this.searchQuery = savedQuery;
           localStorage.removeItem('searchQuery');
-          this.searchCourses();
         }
       }
     });
