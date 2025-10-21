@@ -1,212 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartClass | Checkout</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartClass | Checkout</title>
 
-  <!-- Vue.js -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<!-- Vue.js -->
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { background: #f7f7f7; }
-    .checkout-container {
-      max-width: 1000px;
-      margin: 60px auto;
-      padding: 30px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    h1 { text-align: center; font-size: 28px; margin-bottom: 30px; color: #333; }
-    .checkout-grid { display: flex; flex-wrap: wrap; gap: 30px; }
-    .billing, .order-summary { flex: 1; min-width: 300px; }
-    .billing input, .payment input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-    .order-summary .summary-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
-    }
-    .order-summary .total {
-      font-weight: 700;
-      font-size: 18px;
-      color: #4c51bf;
-      margin-top: 15px;
-      text-align: right;
-    }
-    .place-order-btn {
-      background: #667eea;
-      color: #fff;
-      border: none;
-      padding: 14px 20px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 20px;
-      width: 100%;
-      transition: background 0.3s;
-    }
-    .place-order-btn:hover { background: #5a67d8; }
-    .empty-cart { text-align: center; padding: 50px 20px; font-size: 18px; color: #555; }
-    .toast {
-      position: fixed; bottom: 30px; right: 30px;
-      background: #4c51bf; color: white; padding: 14px 20px;
-      border-radius: 8px; font-weight: 600;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      opacity: 0; transform: translateY(20px);
-      transition: all 0.4s ease; z-index: 2000;
-    }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .toast.error { background: #ff3b2f; }
-    .payment-methods { margin-top: 20px; }
-    .payment-methods label { margin-right: 20px; font-weight: bold; cursor: pointer; }
-    .payment { margin-top: 15px; }
-  </style>
+<link rel="stylesheet" href="style.css">
+<style>
+body { background: #f8f9fa; font-family: Arial, sans-serif; margin: 0; }
+.checkout-container { max-width: 1100px; margin: 60px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; gap: 30px; flex-wrap: wrap; }
+.left, .right { flex: 1 1 450px; }
+h1 { width: 100%; text-align: center; margin-bottom: 30px; }
+.section { margin-bottom: 25px; }
+.section h3 { margin-bottom: 15px; color: #333; }
+
+/* Form */
+.form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+label { font-weight: bold; margin-bottom: 5px; }
+input, select { padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; width: 100%; }
+input[type=checkbox] { width: auto; margin-right: 8px; }
+.radio-group { display: flex; gap: 15px; margin-top: 5px; }
+
+/* Payment */
+.payment-methods { margin-top: 15px; }
+.payment-option { display: flex; align-items: center; gap: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+.payment-option i { font-size: 24px; }
+.card-details { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* Cart summary */
+.cart-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+.cart-details { display: flex; align-items: center; gap: 15px; }
+.cart-details img { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; }
+.cart-info h4 { margin: 0; font-size: 16px; color: #222; }
+.cart-info p { margin: 2px 0 0; font-size: 14px; color: #555; }
+.cart-price { font-weight: 700; color: #4c51bf; font-size: 16px; }
+.total-box { text-align: right; margin-top: 20px; font-size: 18px; font-weight: bold; }
+
+/* Buttons */
+.checkout-btn { background: #667eea; color: #fff; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 15px; }
+.checkout-btn:hover { background: #5a67d8; }
+
+/* Toast */
+.toast { position: fixed; bottom: 30px; right: 30px; background: #4c51bf; color: white; padding: 14px 20px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.2); opacity: 0; transform: translateY(20px); transition: all 0.4s ease; z-index: 2000; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { background: #ff3b2f; }
+
+footer { text-align: center; margin: 40px 0; color: #555; }
+</style>
 </head>
 <body>
-  <div id="app">
-    <!-- Navbar -->
-    <header class="navbar">
-      <div class="container">
-        <div class="logo"><a href="index.html">SmartClass</a></div>
-        <nav>
-          <ul class="nav-list">
-            <li><a href="index.html" class="nav-link">Home</a></li>
-            <li><a href="course.html" class="nav-link">Courses</a></li>
-            <li><a href="#" class="nav-link">About</a></li>
-            <li><a href="#" class="nav-link">Contact</a></li>
-            <li>
-              <a href="cart.html" class="signup-btn">
-                <i class="fas fa-shopping-cart"></i> Cart
-                <span v-if="cart.length > 0" class="cart-badge">{{ cart.length }}</span>
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </header>
+<div id="app">
+  <header class="navbar">
+    <div class="container">
+      <div class="logo"><a href="index.html">SmartClass</a></div>
+    </div>
+  </header>
 
-    <!-- Checkout Content -->
-    <section class="checkout-container">
-      <h1>Checkout</h1>
+  <h1>Checkout</h1>
 
-      <div v-if="cart.length === 0" class="empty-cart">
-        🛒 Your cart is empty. <a href="course.html" style="color:#4c51bf; font-weight:bold;">Browse Courses</a>
-      </div>
-
-      <div v-else class="checkout-grid">
-        <!-- Billing Details -->
-        <div class="billing">
-          <h2>Billing Information</h2>
-          <input type="text" placeholder="Full Name" v-model="billing.name">
-          <input type="email" placeholder="Email Address" v-model="billing.email">
-          <input type="text" placeholder="Phone Number" v-model="billing.phone">
-          <input type="text" placeholder="Address (optional)" v-model="billing.address">
-
-          <!-- Payment Methods -->
-          <div class="payment-methods">
-            <h3>Payment Method</h3>
-            <label>
-              <input type="radio" value="card" v-model="payment.method"> Credit/Debit Card
-            </label>
-            <label>
-              <input type="radio" value="paypal" v-model="payment.method"> PayPal
-            </label>
-          </div>
-
-          <div class="payment" v-if="payment.method === 'card'">
-            <input type="text" placeholder="Card Number" v-model="payment.cardNumber">
-            <input type="text" placeholder="Expiry (MM/YY)" v-model="payment.expiry">
-            <input type="text" placeholder="CVV" v-model="payment.cvv">
-          </div>
-
-          <div class="payment" v-if="payment.method === 'paypal'">
-            <p>PayPal payment will be redirected (mock).</p>
+  <div class="checkout-container">
+    <!-- Left: Customer + Shipping + Payment -->
+    <div class="left">
+      <div class="section">
+        <h3>Customer Details</h3>
+        <div class="form-group"><label>First Name</label><input v-model.trim="order.firstName" placeholder="Enter first name"></div>
+        <div class="form-group"><label>Last Name</label><input v-model.trim="order.lastName" placeholder="Enter last name"></div>
+        <div class="form-group"><label>Email</label><input type="email" v-model.trim="order.email" placeholder="john@example.com"></div>
+        <div class="form-group"><label>Address</label><input v-model.trim="order.address" placeholder="Street address"></div>
+        <div class="form-group"><label>City</label><input v-model.trim="order.city" placeholder="City name"></div>
+        <div class="form-group">
+          <label>State</label>
+          <select v-model="order.state">
+            <option disabled value="">Select State</option>
+            <option v-for="state in states" :value="state">{{ state }}</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Zip/Postal Code</label><input v-model.number="order.zip" type="number" placeholder="e.g., 90001"></div>
+        <div class="form-group">
+          <input type="checkbox" id="gift" v-model="order.gift">
+          <label for="gift">Ship As Gift?</label>
+        </div>
+        <div class="form-group">
+          <label>Delivery Method</label>
+          <div class="radio-group">
+            <input type="radio" id="home" value="Home" v-model="order.method">
+            <label for="home">Home</label>
+            <input type="radio" id="business" value="Business" v-model="order.method">
+            <label for="business">Business</label>
           </div>
         </div>
+      </div>
 
-        <!-- Order Summary -->
-        <div class="order-summary">
-          <h2>Order Summary</h2>
-          <div class="summary-item" v-for="item in cart" :key="item.id">
-            <span>{{ item.title }}</span>
-            <span>${{ item.price.toFixed(2) }}</span>
-          </div>
-          <div class="total">Total: ${{ totalPrice.toFixed(2) }}</div>
-
-          <button class="place-order-btn" @click="placeOrder">Place Order</button>
+      <div class="section payment-methods">
+        <h3>Payment Method</h3>
+        <label class="payment-option">
+          <input type="radio" value="card" v-model="payment.method">
+          <span><i class="fa-brands fa-cc-visa"></i> <i class="fa-brands fa-cc-mastercard"></i> Credit/Debit Card</span>
+        </label>
+        <label class="payment-option">
+          <input type="radio" value="paypal" v-model="payment.method">
+          <span><i class="fa-brands fa-cc-paypal"></i> PayPal</span>
+        </label>
+        <div v-if="payment.method==='card'" class="card-details">
+          <input type="text" v-model="payment.cardNumber" placeholder="Card Number">
+          <input type="text" v-model="payment.expiry" placeholder="MM/YY">
+          <input type="text" v-model="payment.cvv" placeholder="CVV">
         </div>
       </div>
-    </section>
 
-    <!-- Toast -->
-    <div v-if="toastMessage" :class="['toast', toastType, { show: showToast }]">
-      {{ toastMessage }}
+      <button class="checkout-btn" @click="placeOrder">Place Order</button>
     </div>
 
-    <!-- Footer -->
-    <footer>
-      &copy; 2025 SmartClass. All rights reserved.
-    </footer>
+    <!-- Right: Order Summary -->
+    <div class="right">
+      <div class="section">
+        <h3>Order Summary</h3>
+        <div v-if="cart.length===0">🛒 Your cart is empty. <a href="course.html" style="color:#4c51bf;font-weight:bold;">Browse Courses</a></div>
+        <div v-else>
+          <div class="cart-item" v-for="(item,index) in cart" :key="index">
+            <div class="cart-details">
+              <img :src="item.image" :alt="item.title">
+              <div class="cart-info">
+                <h4>{{ item.title }}</h4>
+                <p>{{ item.category }} • {{ item.instructor }}</p>
+              </div>
+            </div>
+            <div class="cart-price">${{ item.price }}</div>
+          </div>
+          <div class="total-box">Total: ${{ totalPrice.toFixed(2) }}</div>
+        </div>
+
+        <hr>
+        <h3>Shipping & Delivery Info</h3>
+        <p><strong>First Name:</strong> {{ order.firstName }}</p>
+        <p><strong>Last Name:</strong> {{ order.lastName }}</p>
+        <p><strong>Address:</strong> {{ order.address }}</p>
+        <p><strong>City:</strong> {{ order.city }}</p>
+        <p><strong>State:</strong> {{ order.state }}</p>
+        <p><strong>Zip:</strong> {{ order.zip }}</p>
+        <p><strong>Delivery Method:</strong> {{ order.method }}</p>
+        <p><strong>Gift:</strong> {{ order.gift ? 'Yes' : 'No' }}</p>
+      </div>
+    </div>
   </div>
 
-  <script>
-    new Vue({
-      el: '#app',
-      data: {
-        cart: [],
-        billing: { name:'', email:'', phone:'', address:'' },
-        payment: { method:'card', cardNumber:'', expiry:'', cvv:'' },
-        toastMessage: '',
-        showToast: false,
-        toastType: ''
-      },
-      computed: {
-        totalPrice() {
-          return this.cart.reduce((sum, item) => sum + item.price, 0);
-        }
-      },
-      methods: {
-        showNotification(message, type='') {
-          this.toastMessage = message;
-          this.toastType = type;
-          this.showToast = true;
-          setTimeout(() => this.showToast = false, 3000);
-        },
-        placeOrder() {
-          if (!this.billing.name || !this.billing.email || !this.billing.phone) {
-            this.showNotification('Please fill in all billing fields', 'error');
-            return;
-          }
-          if (this.payment.method === 'card' &&
-              (!this.payment.cardNumber || !this.payment.expiry || !this.payment.cvv)) {
-            this.showNotification('Please fill in all card details', 'error');
-            return;
-          }
-          this.showNotification('Order Placed Successfully!');
-          localStorage.removeItem('cart');
-          this.cart = [];
-        }
-      },
-      mounted() {
-        const storedCart = localStorage.getItem('cart');
-        if (storedCart) this.cart = JSON.parse(storedCart);
-      }
-    });
-  </script>
+  <div v-if="toastMessage" :class="['toast', toastType, { show: showToast }]">{{ toastMessage }}</div>
+  <footer>&copy; 2025 SmartClass. All rights reserved.</footer>
+</div>
+
+<script>
+new Vue({
+  el:'#app',
+  data:{
+    cart: JSON.parse(localStorage.getItem('cart')) || [],
+    order: { firstName:'', lastName:'', email:'', address:'', city:'', state:'', zip:null, gift:false, method:'' },
+    states:['Alabama','Alaska','California','New York','Texas','Florida','Illinois'],
+    payment:{ method:'', cardNumber:'', expiry:'', cvv:'' },
+    toastMessage:'', showToast:false, toastType:''
+  },
+  computed:{
+    totalPrice(){ return this.cart.reduce((sum,item)=>sum+item.price,0); }
+  },
+  methods:{
+    showNotification(message,type=''){ this.toastMessage=message; this.toastType=type; this.showToast=true; setTimeout(()=>{this.showToast=false},3000); },
+    placeOrder(){
+      if(this.cart.length===0){ this.showNotification('Cart is empty','error'); return; }
+      if(!this.order.firstName || !this.order.lastName || !this.order.email || !this.order.address || !this.order.city || !this.order.state || !this.order.zip){ this.showNotification('Fill in all shipping info','error'); return; }
+      if(!this.order.method){ this.showNotification('Select delivery method','error'); return; }
+      if(!this.payment.method){ this.showNotification('Select payment method','error'); return; }
+      if(this.payment.method==='card' && (!this.payment.cardNumber || !this.payment.expiry || !this.payment.cvv)){ this.showNotification('Fill in card details','error'); return; }
+
+      this.showNotification('Order placed successfully!');
+      localStorage.removeItem('cart'); this.cart=[];
+      this.order={ firstName:'', lastName:'', email:'', address:'', city:'', state:'', zip:null, gift:false, method:'' };
+      this.payment={ method:'', cardNumber:'', expiry:'', cvv:'' };
+    }
+  }
+})
+</script>
 </body>
 </html>
