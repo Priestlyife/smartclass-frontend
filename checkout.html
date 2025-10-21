@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartClass | Checkout</title>
+
+  <!-- Vue.js -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: #f7f7f7; }
+    .checkout-container {
+      max-width: 1000px;
+      margin: 60px auto;
+      padding: 30px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    h1 { text-align: center; font-size: 28px; margin-bottom: 30px; color: #333; }
+    .checkout-grid { display: flex; flex-wrap: wrap; gap: 30px; }
+    .billing, .order-summary { flex: 1; min-width: 300px; }
+    .billing input, .payment input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    .order-summary .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .order-summary .total {
+      font-weight: 700;
+      font-size: 18px;
+      color: #4c51bf;
+      margin-top: 15px;
+      text-align: right;
+    }
+    .place-order-btn {
+      background: #667eea;
+      color: #fff;
+      border: none;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+      width: 100%;
+      transition: background 0.3s;
+    }
+    .place-order-btn:hover { background: #5a67d8; }
+    .empty-cart { text-align: center; padding: 50px 20px; font-size: 18px; color: #555; }
+    .toast {
+      position: fixed; bottom: 30px; right: 30px;
+      background: #4c51bf; color: white; padding: 14px 20px;
+      border-radius: 8px; font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      opacity: 0; transform: translateY(20px);
+      transition: all 0.4s ease; z-index: 2000;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: #ff3b2f; }
+    .payment-methods { margin-top: 20px; }
+    .payment-methods label { margin-right: 20px; font-weight: bold; cursor: pointer; }
+    .payment { margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="container">
+        <div class="logo"><a href="index.html">SmartClass</a></div>
+        <nav>
+          <ul class="nav-list">
+            <li><a href="index.html" class="nav-link">Home</a></li>
+            <li><a href="course.html" class="nav-link">Courses</a></li>
+            <li><a href="#" class="nav-link">About</a></li>
+            <li><a href="#" class="nav-link">Contact</a></li>
+            <li>
+              <a href="cart.html" class="signup-btn">
+                <i class="fas fa-shopping-cart"></i> Cart
+                <span v-if="cart.length > 0" class="cart-badge">{{ cart.length }}</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Checkout Content -->
+    <section class="checkout-container">
+      <h1>Checkout</h1>
+
+      <div v-if="cart.length === 0" class="empty-cart">
+        🛒 Your cart is empty. <a href="course.html" style="color:#4c51bf; font-weight:bold;">Browse Courses</a>
+      </div>
+
+      <div v-else class="checkout-grid">
+        <!-- Billing Details -->
+        <div class="billing">
+          <h2>Billing Information</h2>
+          <input type="text" placeholder="Full Name" v-model="billing.name">
+          <input type="email" placeholder="Email Address" v-model="billing.email">
+          <input type="text" placeholder="Phone Number" v-model="billing.phone">
+          <input type="text" placeholder="Address (optional)" v-model="billing.address">
+
+          <!-- Payment Methods -->
+          <div class="payment-methods">
+            <h3>Payment Method</h3>
+            <label>
+              <input type="radio" value="card" v-model="payment.method"> Credit/Debit Card
+            </label>
+            <label>
+              <input type="radio" value="paypal" v-model="payment.method"> PayPal
+            </label>
+          </div>
+
+          <div class="payment" v-if="payment.method === 'card'">
+            <input type="text" placeholder="Card Number" v-model="payment.cardNumber">
+            <input type="text" placeholder="Expiry (MM/YY)" v-model="payment.expiry">
+            <input type="text" placeholder="CVV" v-model="payment.cvv">
+          </div>
+
+          <div class="payment" v-if="payment.method === 'paypal'">
+            <p>PayPal payment will be redirected (mock).</p>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="order-summary">
+          <h2>Order Summary</h2>
+          <div class="summary-item" v-for="item in cart" :key="item.id">
+            <span>{{ item.title }}</span>
+            <span>${{ item.price.toFixed(2) }}</span>
+          </div>
+          <div class="total">Total: ${{ totalPrice.toFixed(2) }}</div>
+
+          <button class="place-order-btn" @click="placeOrder">Place Order</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Toast -->
+    <div v-if="toastMessage" :class="['toast', toastType, { show: showToast }]">
+      {{ toastMessage }}
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      &copy; 2025 SmartClass. All rights reserved.
+    </footer>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        cart: [],
+        billing: { name:'', email:'', phone:'', address:'' },
+        payment: { method:'card', cardNumber:'', expiry:'', cvv:'' },
+        toastMessage: '',
+        showToast: false,
+        toastType: ''
+      },
+      computed: {
+        totalPrice() {
+          return this.cart.reduce((sum, item) => sum + item.price, 0);
+        }
+      },
+      methods: {
+        showNotification(message, type='') {
+          this.toastMessage = message;
+          this.toastType = type;
+          this.showToast = true;
+          setTimeout(() => this.showToast = false, 3000);
+        },
+        placeOrder() {
+          if (!this.billing.name || !this.billing.email || !this.billing.phone) {
+            this.showNotification('Please fill in all billing fields', 'error');
+            return;
+          }
+          if (this.payment.method === 'card' &&
+              (!this.payment.cardNumber || !this.payment.expiry || !this.payment.cvv)) {
+            this.showNotification('Please fill in all card details', 'error');
+            return;
+          }
+          this.showNotification('Order Placed Successfully!');
+          localStorage.removeItem('cart');
+          this.cart = [];
+        }
+      },
+      mounted() {
+        const storedCart = localStorage.getItem('cart');
+        if (storedCart) this.cart = JSON.parse(storedCart);
+      }
+    });
+  </script>
+</body>
+</html>
