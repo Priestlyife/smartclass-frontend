@@ -72,3 +72,11 @@ footer { text-align:center; padding:25px; background:#333; color:#fff; font-size
 
 /* Responsive */
 @media(max-width:768px){ .courses-header{flex-direction:column;align-items:flex-start;gap:10px} .filter-bar{justify-content:flex-start} .search-bar{flex-direction:column;width:100%;gap:10px} .search-bar input,.search-bar button{width:100%} .course-grid{grid-template-columns:1fr} }
+
+.no-course {
+  text-align: center;
+  font-size: 18px;
+  color: #444;
+  margin-top: 50px;
+  font-weight: 600;
+}

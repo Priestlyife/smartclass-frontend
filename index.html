@@ -175,5 +175,19 @@
       }
     });
   </script>
+
+  <script>
+  document.querySelector('.search-bar button').addEventListener('click', function() {
+    const searchQuery = document.querySelector('.search-bar input').value.trim();
+    if (searchQuery) {
+      // Save search term to localStorage
+      localStorage.setItem('searchQuery', searchQuery);
+      // Redirect to course.html
+      window.location.href = 'course.html';
+    } else {
+      alert('Please enter a course name to search');
+    }
+  });
+</script>
 </body>
 </html>
