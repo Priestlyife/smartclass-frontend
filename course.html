@@ -70,49 +70,75 @@
         <button @click="searchCourses">Search</button>
       </div>
     </section>
+    
 
-    <!-- All Courses Grid -->
-    <section class="courses" id="courses">
+    <!-- All Courses Section -->
+<section class="courses" id="courses">
 
-       <div v-if="filteredCourses.length === 0" class="no-course">
-        ❌ Course not available for now.
+  <!-- No Courses Found -->
+  <div v-if="filteredCourses.length === 0" class="no-course">
+    ❌ Course not available for now.
+  </div>
+
+  <!-- Search Results -->
+  <div v-else-if="searchQuery.trim() !== ''" class="search-results">
+    <div class="course-card" v-for="course in filteredCourses" :key="course.id">
+      <img :src="course.image" :alt="course.title">
+      <div class="info">
+        <h3>{{ course.title }}</h3>
+        <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
+        <div class="rating-box">
+          <span class="star">★</span>
+          {{ course.rating }}
+          <span class="review-count">({{ course.reviews }} ratings)</span>
+        </div>
+        <div class="price">${{ course.price }}</div>
       </div>
-
-      <div class="course-grid" v-else></div>
-      <div class="course-grid">
-        <div class="course-card" v-for="course in filteredCourses" :key="course.id">
-          <img :src="course.image" :alt="course.title">
-
-          <div class="info">
-            <h3>{{ course.title }}</h3>
-            <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
-
-            <div class="rating-box">
-              <span class="star">★</span>
-              {{ course.rating }}
-              <span class="review-count">({{ course.reviews }} ratings)</span>
-            </div>
-
-            <div class="price">${{ course.price }}</div>
-          </div>
-
-            <!-- Overlay -->
-
-          <div class="overlay">
-            <h4>{{ course.title }}</h4>
-            <p><strong>Bestseller</strong> • Updated Oct 2025</p>
-            <p>2h • All Levels • Subtitles</p>
-            <ul>
-              <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
-            </ul>
-            <div class="overlay-bottom">
-              <span class="overlay-price">${{ course.price }}</span>
-              <button class="btn-cart">Add to Cart</button>
-            </div>
-          </div>
+      <div class="overlay">
+        <h4>{{ course.title }}</h4>
+        <p><strong>Bestseller</strong> • Updated Oct 2025</p>
+        <p>2h • All Levels • Subtitles</p>
+        <ul>
+          <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
+        </ul>
+        <div class="overlay-bottom">
+          <span class="overlay-price">${{ course.price }}</span>
+          <button class="btn-cart">Add to Cart</button>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
+
+  <!-- All Courses Grid -->
+  <div v-else class="course-grid">
+    <div class="course-card" v-for="course in filteredCourses" :key="course.id">
+      <img :src="course.image" :alt="course.title">
+      <div class="info">
+        <h3>{{ course.title }}</h3>
+        <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
+        <div class="rating-box">
+          <span class="star">★</span>
+          {{ course.rating }}
+          <span class="review-count">({{ course.reviews }} ratings)</span>
+        </div>
+        <div class="price">${{ course.price }}</div>
+      </div>
+      <div class="overlay">
+        <h4>{{ course.title }}</h4>
+        <p><strong>Bestseller</strong> • Updated Oct 2025</p>
+        <p>2h • All Levels • Subtitles</p>
+        <ul>
+          <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
+        </ul>
+        <div class="overlay-bottom">
+          <span class="overlay-price">${{ course.price }}</span>
+          <button class="btn-cart">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
 
     <!-- Footer -->
     <footer>
@@ -164,30 +190,35 @@
           return [...new Set(cats)];
         },
         filteredCourses() {
-          let filtered = this.courses;
+  let filtered = this.courses;
 
-          if (this.selectedCategory) {
-            filtered = filtered.filter(c => c.category === this.selectedCategory);
-          }
+  // Filter by category if selected
+  if (this.selectedCategory) {
+    filtered = filtered.filter(c => c.category === this.selectedCategory);
+  }
 
-          if (this.searchQuery.trim() !== '') {
-            const q = this.searchQuery.toLowerCase();
-            filtered = filtered.filter(c =>
-              c.title.toLowerCase().includes(q) ||
-              c.category.toLowerCase().includes(q)
-            );
-          }
+  // Keyword-based search
+  if (this.searchQuery.trim() !== '') {
+    const q = this.searchQuery.toLowerCase().split(' '); // split query into keywords
+    filtered = filtered.filter(c => {
+      const title = c.title.toLowerCase();
+      const category = c.category.toLowerCase();
+      // Check if any keyword is in title or category
+      return q.some(word => title.includes(word) || category.includes(word));
+    });
+  }
 
-          if (this.selectedSort === 'rating') {
-            filtered = filtered.sort((a, b) => b.rating - a.rating);
-          } else if (this.selectedSort === 'priceLow') {
-            filtered = filtered.sort((a, b) => a.price - b.price);
-          } else if (this.selectedSort === 'priceHigh') {
-            filtered = filtered.sort((a, b) => b.price - a.price);
-          }
+  // Sorting
+  if (this.selectedSort === 'rating') {
+    filtered = filtered.sort((a, b) => b.rating - a.rating);
+  } else if (this.selectedSort === 'priceLow') {
+    filtered = filtered.sort((a, b) => a.price - b.price);
+  } else if (this.selectedSort === 'priceHigh') {
+    filtered = filtered.sort((a, b) => b.price - a.price);
+  }
 
-          return filtered;
-        }
+  return filtered;
+}
       },
       methods: {
         clearFilters() {
