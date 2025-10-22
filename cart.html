@@ -14,6 +14,18 @@
   <!-- CSS -->
   <link rel="stylesheet" href="style.css">
   <style>
+    /* 🔴 Fix: Add red badge style */
+    .cart-badge {
+      background: #ff3b2f;
+      color: #fff;
+      border-radius: 50%;
+      padding: 3px 8px;
+      font-size: 12px;
+      margin-left: 6px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
     .cart-container {
       max-width: 1000px;
       margin: 60px auto;
@@ -170,10 +182,10 @@
         <ul class="nav-list">
           <li><a href="index.html" class="nav-link">Home</a></li>
           <li><a href="course.html" class="nav-link">Courses</a></li>
-          
           <li>
             <a href="cart.html" class="signup-btn">
               <i class="fas fa-shopping-cart"></i> Cart
+              <!-- 🔴 Red Badge -->
               <span v-if="cart.length > 0" class="cart-badge">{{ cart.length }}</span>
             </a>
           </li>
