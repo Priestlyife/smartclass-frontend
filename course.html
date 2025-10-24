@@ -11,12 +11,12 @@
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- CSS -->
+  <!-- CSS (your external files) -->
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="course.css">
 
   <style>
-    /* small badge style if not already in your css */
+    /* small UI + toast styles */
     .cart-badge {
       background: #ff3b2f;
       color: #fff;
@@ -27,8 +27,6 @@
       font-weight: 700;
       vertical-align: middle;
     }
-
-    /* "Showing results" text */
     .search-meta {
       max-width: 1200px;
       margin: 0 auto 12px;
@@ -36,8 +34,6 @@
       color: #444;
       font-weight: 600;
     }
-
-    /* Toast Notification */
     .toast {
       position: fixed;
       bottom: 30px;
@@ -53,35 +49,58 @@
       transition: all 0.4s ease;
       z-index: 2000;
     }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: #ff3b2f; }
 
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .no-course { text-align:center; font-size:18px; padding:40px; color:#555; }
 
-    .toast.error {
-      background: #ff3b2f;
-    }
+    /* overlay styling fallback if your CSS doesn't cover it */
+    .course-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap:18px; max-width:1200px; margin:20px auto; padding:0 20px; }
+    .course-card { background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 6px 18px rgba(12,12,12,0.05); position:relative; display:flex; flex-direction:column; }
+    .course-card img { width:100%; height:160px; object-fit:cover; display:block; }
+    .course-card .info { padding:14px; flex:1 1 auto; }
+    .course-card h3 { margin:0 0 6px; font-size:16px; color:#222; }
+    .instructor { font-size:13px; color:#666; margin-bottom:8px; }
+    .rating-box { font-weight:600; color:#444; font-size:13px; margin-bottom:8px; }
+    .price { font-weight:800; color:#4c51bf; margin-bottom:6px; }
+    .course-extra { font-size:13px; color:#666; margin-top:6px; line-height:1.3; }
+
+    .overlay { padding:12px 14px 18px; border-top:1px solid #f0f0f0; background:#fafafa; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .overlay .overlay-left { max-width:70%; }
+    .overlay .overlay-left h4 { margin:0 0 6px; font-size:15px; }
+    .overlay .details-list { margin:0 0 6px; padding-left:18px; color:#444; font-size:13px;}
+    .overlay .overlay-bottom { display:flex; align-items:center; gap:10px; }
+    .overlay .overlay-price { font-weight:800; color:#4c51bf; }
+    .btn-cart { background:#667eea; color:#fff; padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
+    .btn-cart[disabled] { background:#ccc; cursor:not-allowed; }
+
+    /* toolbar */
+    .courses-header-bar { max-width:1200px; margin:20px auto; padding:0 20px; }
+    .filter-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; background:#f8f9fb; padding:12px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.04); }
+    .left-controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .right-controls { display:flex; gap:8px; align-items:center; }
+    .filter-select, .search-input, .search-btn, .clear-btn { font-size:14px; padding:9px 12px; border-radius:6px; border:1px solid #dcdfe6; outline:none; }
+    .filter-select { min-width:160px; background:#fff; }
+    .search-input { width:260px; border-top-right-radius:0; border-bottom-right-radius:0; }
+    .search-btn { background:#4c51bf; color:#fff; border-top-left-radius:0; border-bottom-left-radius:0; cursor:pointer; }
+    .clear-btn { background:#ff3b2f; color:#fff; border:none; cursor:pointer; padding:9px 12px; border-radius:6px; }
+    @media (max-width:900px) { .filter-toolbar{flex-direction:column;align-items:stretch;} .search-input{width:100%;} }
   </style>
 </head>
 <body>
   <div id="app">
-
     <!-- Header -->
     <header class="navbar">
       <div class="container">
-        <div class="logo">
-          <a href="index.html">SmartClass</a>
-        </div>
+        <div class="logo"><a href="index.html">SmartClass</a></div>
         <nav>
           <ul class="nav-list">
             <li><a href="index.html" class="nav-link">Home</a></li>
             <li><a href="course.html" class="nav-link active">Courses</a></li>
-            
             <li>
               <a href="cart.html" class="signup-btn" @click.prevent="goToCart">
                 <i class="fas fa-shopping-cart"></i> Cart
-                <span v-if="cart.length > 0" class="cart-badge">{{ cart.length }}</span>
+                <span v-if="cartTotalItems > 0" class="cart-badge">{{ cartTotalItems }}</span>
               </a>
             </li>
           </ul>
@@ -95,45 +114,43 @@
       <p>Browse our complete collection of high-quality learning programs designed for your growth.</p>
     </section>
 
-    <!-- Courses Header & Search/Filter -->
+    <!-- Filter & Search Bar -->
     <section class="courses-header-bar">
-      <div class="courses-header">
-        <h2></h2>
-        <div class="filter-bar">
-          <select v-model="selectedCategory" class="filter-select">
+      <div class="filter-toolbar" role="toolbar" aria-label="Course filters">
+        <div class="left-controls">
+          <select v-model="selectedCategory" class="filter-select" aria-label="Filter by category">
             <option value="">All Categories</option>
             <option v-for="cat in categories" :key="cat">{{ cat }}</option>
           </select>
-          <select v-model="selectedSort" class="filter-select">
+          <select v-model="selectedSort" class="filter-select" aria-label="Sort courses">
             <option value="">Sort By</option>
             <option value="rating">Best Rating</option>
             <option value="priceLow">Price: Low to High</option>
             <option value="priceHigh">Price: High to Low</option>
           </select>
-          <button @click="clearFilters" class="clear-btn">X</button>
         </div>
-      </div>
 
-      <div class="search-bar">
-        <input type="text" placeholder="Search for a course..." v-model="searchQuery" @keyup.enter="searchCourses">
-        <button @click="searchCourses">Search</button>
+        <div class="right-controls">
+          <div style="display:flex;align-items:center;">
+            <input class="search-input" type="text" placeholder="Search for a course..." v-model="searchQuery" @keyup.enter="searchCourses" aria-label="Search courses">
+            <button class="search-btn" @click="searchCourses" aria-label="Search">Search</button>
+          </div>
+          <button class="clear-btn" @click="clearFilters" aria-label="Clear filters">Clear</button>
+        </div>
       </div>
     </section>
 
-    <!-- show meta when searching -->
+    <!-- Search Result Info -->
     <div v-if="searchQuery.trim() !== ''" class="search-meta">
       Showing {{ filteredCourses.length }} result<span v-if="filteredCourses.length !== 1">s</span> for "<strong>{{ searchQuery }}</strong>"
     </div>
 
-    <!-- All Courses Section -->
+    <!-- All Courses -->
     <section class="courses" id="courses">
-
-      <!-- No Courses Found -->
       <div v-if="filteredCourses.length === 0" class="no-course">
-        ❌ Course not available for now.
+        ❌ No courses found for "<strong>{{ searchQuery }}</strong>"
       </div>
 
-      <!-- Courses Grid -->
       <div v-else class="course-grid">
         <div class="course-card" v-for="course in filteredCourses" :key="course.id">
           <img :src="course.image" :alt="course.title">
@@ -141,32 +158,48 @@
             <h3>{{ course.title }}</h3>
             <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
             <div class="rating-box">
-              <span class="star">★</span>
-              {{ course.rating }}
-              <span class="review-count">({{ course.reviews }} ratings)</span>
+              <span class="star">★</span> {{ course.rating }}
+              <span class="review-count"> ({{ course.reviews }} ratings)</span>
             </div>
-            <div class="price">${{ course.price }}</div>
+            <div class="price">${{ formatPrice(course.price) }}</div>
+
+            <p class="course-extra">
+              📍 {{ course.location }}<br>
+              🧾 Available: <strong>{{ course.available }}</strong>
+            </p>
           </div>
 
-          <div class="overlay">
-            <h4>{{ course.title }}</h4>
-            <p><strong>Bestseller</strong> • Updated Oct 2025</p>
-            <p>2h • All Levels • Subtitles</p>
-            <ul>
-              <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
-            </ul>
+          <!-- overlay with full details -->
+          <div class="overlay" role="region" aria-label="Course details">
+            <div class="overlay-left">
+              <h4>{{ course.title }}</h4>
+              <p style="margin:6px 0; font-size:13px; color:#444;"><strong>Bestseller</strong> • Updated Oct 2025</p>
+              <p style="margin:4px 0; font-size:13px; color:#444;">2h • All Levels • Subtitles</p>
+
+              <ul class="details-list">
+                <li v-for="(d, i) in course.details" :key="i">{{ d }}</li>
+              </ul>
+
+              <p style="margin:6px 0; font-size:13px; color:#666;">
+                <strong>Location:</strong> {{ course.location }} &nbsp; • &nbsp;
+                <strong>Available:</strong> {{ course.available }}
+              </p>
+            </div>
+
             <div class="overlay-bottom">
-              <span class="overlay-price">${{ course.price }}</span>
-              <button class="btn-cart" @click="addToCart(course)">Add to Cart</button>
+              <span class="overlay-price">${{ formatPrice(course.price) }}</span>
+              <button class="btn-cart" @click="addToCart(course)" :disabled="isAtMax(course)">
+                <span v-if="!isAtMax(course)">Add to Cart</span>
+                <span v-else>Sold Out</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
-
     </section>
 
     <!-- Toast -->
-    <div v-if="toastMessage" :class="['toast', toastType, { show: showToast }]">
+    <div v-if="toastMessage" :class="['toast', toastType, { show: showToast }]" role="status">
       {{ toastMessage }}
     </div>
 
@@ -176,7 +209,6 @@
     </footer>
   </div>
 
-  <!-- Vue Script -->
   <script>
     new Vue({
       el: '#app',
@@ -190,32 +222,32 @@
         toastType: '',
         courses: [
           // --- Development ---
-          { id: 1, title: 'Web Development Bootcamp', category: 'Development', instructor: 'John Doe', rating: 4.8, reviews: 10200, price: 49.99, image: 'images/web development.jpg', details: ['HTML, CSS, JS', 'Real projects', 'Deploy professionally'] },
-          { id: 2, title: 'React Frontend Development', category: 'Development', instructor: 'Chris Walker', rating: 4.7, reviews: 7800, price: 44.99, image: 'images/react.jpg', details: ['React Hooks', 'Components', 'Deploy to Netlify'] },
-          { id: 3, title: 'Mobile App Development with Flutter', category: 'Development', instructor: 'Diana Brooks', rating: 4.6, reviews: 6200, price: 39.99, image: 'images/flutter.jpg', details: ['Dart Language', 'Cross-platform UI', 'App Deployment'] },
-          { id: 4, title: 'Backend Development with Node.js', category: 'Development', instructor: 'Henry Stone', rating: 4.8, reviews: 8400, price: 54.99, image: 'images/nodejs.jpg', details: ['Express.js', 'APIs & REST', 'MongoDB Integration'] },
-          { id: 5, title: 'Full Stack Developer Roadmap', category: 'Development', instructor: 'Sarah Green', rating: 4.9, reviews: 9500, price: 64.99, image: 'images/fullstack.jpg', details: ['Frontend + Backend', 'Databases', 'Deployment Workflow'] },
+          { id: 1, title: 'Web Development Bootcamp', category: 'Development', instructor: 'John Doe', rating: 4.8, reviews: 10200, price: 49.99, available: 7, location: 'Apo District, Abuja', image: 'images/web development.jpg', details: ['HTML, CSS, JS', 'Real projects', 'Deploy professionally'] },
+          { id: 2, title: 'React Frontend Development', category: 'Development', instructor: 'Chris Walker', rating: 4.7, reviews: 7800, price: 44.99, available: 5, location: 'Garki, Abuja', image: 'images/react.jpg', details: ['React Hooks', 'Components', 'Deploy to Netlify'] },
+          { id: 3, title: 'Mobile App Development with Flutter', category: 'Development', instructor: 'Diana Brooks', rating: 4.6, reviews: 6200, price: 39.99, available: 6, location: 'Wuse, Abuja', image: 'images/flutter.jpg', details: ['Dart Language', 'Cross-platform UI', 'App Deployment'] },
+          { id: 4, title: 'Backend Development with Node.js', category: 'Development', instructor: 'Henry Stone', rating: 4.8, reviews: 8400, price: 54.99, available: 4, location: 'Central Area, Abuja', image: 'images/nodejs.jpg', details: ['Express.js', 'APIs & REST', 'MongoDB Integration'] },
+          { id: 5, title: 'Full Stack Developer Roadmap', category: 'Development', instructor: 'Sarah Green', rating: 4.9, reviews: 9500, price: 64.99, available: 3, location: 'Kubwa, Abuja', image: 'images/fullstack.jpg', details: ['Frontend + Backend', 'Databases', 'Deployment Workflow'] },
 
           // --- Design ---
-          { id: 6, title: 'UI/UX Design Masterclass', category: 'Design', instructor: 'Jane Smith', rating: 4.6, reviews: 8500, price: 39.99, image: 'images/uii.jpg', details: ['Master Figma', 'User-centered design', 'Portfolio-ready'] },
-          { id: 7, title: 'Graphic Design Fundamentals', category: 'Design', instructor: 'Lara White', rating: 4.5, reviews: 6800, price: 34.99, image: 'images/graphic.jpg', details: ['Color Theory', 'Typography', 'Adobe Tools'] },
-          { id: 8, title: 'Advanced Photoshop Techniques', category: 'Design', instructor: 'Michael Cole', rating: 4.7, reviews: 7200, price: 42.99, image: 'images/photoshop.jpg', details: ['Layer Masks', 'Photo Retouching', 'Compositing'] },
-          { id: 9, title: '3D Design with Blender', category: 'Design', instructor: 'Emma Davis', rating: 4.8, reviews: 7900, price: 47.99, image: 'images/blender.jpg', details: ['Modeling', 'Lighting', 'Rendering Basics'] },
-          { id: 10, title: 'Canva Design for Beginners', category: 'Design', instructor: 'Olivia Brown', rating: 4.4, reviews: 5400, price: 24.99, image: 'images/canva.jpg', details: ['Posters & Flyers', 'Brand Templates', 'Social Media Graphics'] },
+          { id: 6, title: 'UI/UX Design Masterclass', category: 'Design', instructor: 'Jane Smith', rating: 4.6, reviews: 8500, price: 39.99, available: 6, location: 'Wumba, Abuja', image: 'images/uii.jpg', details: ['Master Figma', 'User-centered design', 'Portfolio-ready'] },
+          { id: 7, title: 'Graphic Design Fundamentals', category: 'Design', instructor: 'Lara White', rating: 4.5, reviews: 6800, price: 34.99, available: 8, location: 'Maitama, Abuja', image: 'images/graphic.jpg', details: ['Color Theory', 'Typography', 'Adobe Tools'] },
+          { id: 8, title: 'Advanced Photoshop Techniques', category: 'Design', instructor: 'Michael Cole', rating: 4.7, reviews: 7200, price: 42.99, available: 5, location: 'Gwarinpa, Abuja', image: 'images/photoshop.jpg', details: ['Layer Masks', 'Photo Retouching', 'Compositing'] },
+          { id: 9, title: '3D Design with Blender', category: 'Design', instructor: 'Emma Davis', rating: 4.8, reviews: 7900, price: 47.99, available: 4, location: 'Asokoro, Abuja', image: 'images/blender.jpg', details: ['Modeling', 'Lighting', 'Rendering Basics'] },
+          { id: 10, title: 'Canva Design for Beginners', category: 'Design', instructor: 'Olivia Brown', rating: 4.4, reviews: 5400, price: 24.99, available: 10, location: 'Kado, Abuja', image: 'images/canva.jpg', details: ['Posters & Flyers', 'Brand Templates', 'Social Media Graphics'] },
 
           // --- Marketing ---
-          { id: 11, title: 'Digital Marketing 101', category: 'Marketing', instructor: 'Mike Johnson', rating: 4.7, reviews: 7200, price: 29.99, image: 'images/digital marketing.png', details: ['SEO & Social Media', 'Email Marketing', 'Ad Strategies'] },
-          { id: 12, title: 'Social Media Marketing Strategy', category: 'Marketing', instructor: 'Paula King', rating: 4.6, reviews: 6300, price: 34.99, image: 'images/socialmedia.jpg', details: ['Content Planning', 'Instagram & TikTok Growth', 'Analytics'] },
-          { id: 13, title: 'Google Ads & Analytics', category: 'Marketing', instructor: 'Robert Lee', rating: 4.8, reviews: 8100, price: 44.99, image: 'images/googleads.jpg', details: ['Google Search Campaigns', 'Tracking & Reporting', 'Optimization'] },
-          { id: 14, title: 'Content Writing for Brands', category: 'Marketing', instructor: 'Clara West', rating: 4.5, reviews: 5900, price: 27.99, image: 'images/contentwriting.jpg', details: ['Copywriting', 'Brand Voice', 'SEO Writing'] },
-          { id: 15, title: 'Email Marketing Automation', category: 'Marketing', instructor: 'David Ross', rating: 4.7, reviews: 6400, price: 31.99, image: 'images/emailmarketing.jpg', details: ['Autoresponders', 'Customer Journeys', 'Lead Conversion'] },
+          { id: 11, title: 'Digital Marketing 101', category: 'Marketing', instructor: 'Mike Johnson', rating: 4.7, reviews: 7200, price: 29.99, available: 8, location: 'Central Area, Abuja', image: 'images/digital marketing.png', details: ['SEO & Social Media', 'Email Marketing', 'Ad Strategies'] },
+          { id: 12, title: 'Social Media Marketing Strategy', category: 'Marketing', instructor: 'Paula King', rating: 4.6, reviews: 6300, price: 34.99, available: 7, location: 'Garki, Abuja', image: 'images/socialmedia.jpg', details: ['Content Planning', 'Instagram & TikTok Growth', 'Analytics'] },
+          { id: 13, title: 'Google Ads & Analytics', category: 'Marketing', instructor: 'Robert Lee', rating: 4.8, reviews: 8100, price: 44.99, available: 5, location: 'Wuse, Abuja', image: 'images/googleads.jpg', details: ['Google Search Campaigns', 'Tracking & Reporting', 'Optimization'] },
+          { id: 14, title: 'Content Writing for Brands', category: 'Marketing', instructor: 'Clara West', rating: 4.5, reviews: 5900, price: 27.99, available: 9, location: 'Maitama, Abuja', image: 'images/contentwriting.jpg', details: ['Copywriting', 'Brand Voice', 'SEO Writing'] },
+          { id: 15, title: 'Email Marketing Automation', category: 'Marketing', instructor: 'David Ross', rating: 4.7, reviews: 6400, price: 31.99, available: 6, location: 'Kubwa, Abuja', image: 'images/emailmarketing.jpg', details: ['Autoresponders', 'Customer Journeys', 'Lead Conversion'] },
 
           // --- Programming ---
-          { id: 16, title: 'Python for Beginners', category: 'Programming', instructor: 'Emily Davis', rating: 4.9, reviews: 9300, price: 59.99, image: 'images/python.jpeg', details: ['Python Basics', 'Automation', 'Mini Projects'] },
-          { id: 17, title: 'Java Programming Crash Course', category: 'Programming', instructor: 'Daniel Kim', rating: 4.7, reviews: 7200, price: 49.99, image: 'images/java.jpg', details: ['OOP in Java', 'File Handling', 'Building Apps'] },
-          { id: 18, title: 'C++ Essentials for Developers', category: 'Programming', instructor: 'Kate Monroe', rating: 4.5, reviews: 6100, price: 39.99, image: 'images/cpp.jpg', details: ['Functions & Loops', 'Pointers', 'Memory Management'] },
-          { id: 19, title: 'JavaScript Mastery', category: 'Programming', instructor: 'Lucas Gray', rating: 4.8, reviews: 8800, price: 45.99, image: 'images/javascript.jpg', details: ['DOM Manipulation', 'Async JS', 'Modern ES6+'] },
-          { id: 20, title: 'SQL Database Management', category: 'Programming', instructor: 'Anna Reed', rating: 4.6, reviews: 6700, price: 34.99, image: 'images/sql.jpg', details: ['Queries & Joins', 'Database Design', 'MySQL Practice'] }
+          { id: 16, title: 'Python for Beginners', category: 'Programming', instructor: 'Emily Davis', rating: 4.9, reviews: 9300, price: 59.99, available: 9, location: 'Wuse, Abuja', image: 'images/python.jpeg', details: ['Python Basics', 'Automation', 'Mini Projects'] },
+          { id: 17, title: 'Java Programming Crash Course', category: 'Programming', instructor: 'Daniel Kim', rating: 4.7, reviews: 7200, price: 49.99, available: 6, location: 'Gwarinpa, Abuja', image: 'images/java.jpg', details: ['OOP in Java', 'File Handling', 'Building Apps'] },
+          { id: 18, title: 'C++ Essentials for Developers', category: 'Programming', instructor: 'Kate Monroe', rating: 4.5, reviews: 6100, price: 39.99, available: 5, location: 'Asokoro, Abuja', image: 'images/cpp.jpg', details: ['Functions & Loops', 'Pointers', 'Memory Management'] },
+          { id: 19, title: 'JavaScript Mastery', category: 'Programming', instructor: 'Lucas Gray', rating: 4.8, reviews: 8800, price: 45.99, available: 7, location: 'Kado, Abuja', image: 'images/javascript.jpg', details: ['DOM Manipulation', 'Async JS', 'Modern ES6+'] },
+          { id: 20, title: 'SQL Database Management', category: 'Programming', instructor: 'Anna Reed', rating: 4.6, reviews: 6700, price: 34.99, available: 8, location: 'Sabo, Abuja', image: 'images/sql.jpg', details: ['Queries & Joins', 'Database Design', 'MySQL Practice'] }
         ]
       },
       computed: {
@@ -224,57 +256,86 @@
           return [...new Set(cats)];
         },
         filteredCourses() {
-          let filtered = this.courses;
+          let filtered = this.courses.slice(); // copy so we don't mutate original when sorting
 
           if (this.selectedCategory) {
             filtered = filtered.filter(c => c.category === this.selectedCategory);
           }
 
           if (this.searchQuery.trim() !== '') {
-            const q = this.searchQuery.toLowerCase().split(' ');
+            const q = this.searchQuery.toLowerCase().split(' ').filter(Boolean);
             filtered = filtered.filter(c => {
               const title = c.title.toLowerCase();
               const category = c.category.toLowerCase();
-              return q.some(word => title.includes(word) || category.includes(word));
+              const instructor = c.instructor.toLowerCase();
+              return q.some(word => title.includes(word) || category.includes(word) || instructor.includes(word));
             });
           }
 
           if (this.selectedSort === 'rating') {
-            filtered = filtered.sort((a, b) => b.rating - a.rating);
+            filtered = filtered.slice().sort((a, b) => b.rating - a.rating);
           } else if (this.selectedSort === 'priceLow') {
-            filtered = filtered.sort((a, b) => a.price - b.price);
+            filtered = filtered.slice().sort((a, b) => a.price - b.price);
           } else if (this.selectedSort === 'priceHigh') {
-            filtered = filtered.sort((a, b) => b.price - a.price);
+            filtered = filtered.slice().sort((a, b) => b.price - a.price);
           }
 
           return filtered;
+        },
+        cartTotalItems() {
+          return this.cart.reduce((sum, it) => sum + (it.quantity || 0), 0);
         }
       },
       methods: {
+        formatPrice(p) {
+          return Number(p).toFixed(2);
+        },
         clearFilters() {
           this.selectedCategory = '';
           this.selectedSort = '';
           this.searchQuery = '';
+          localStorage.removeItem('searchQuery');
         },
         searchCourses() {
           if (this.searchQuery.trim() === '') {
             this.showNotification('Please enter a course name to search', 'error');
             return;
           }
+          localStorage.setItem('searchQuery', this.searchQuery.trim());
           this.showNotification(`Searching for "${this.searchQuery}"`);
         },
+        isAtMax(course) {
+          const existing = this.cart.find(it => it.id === course.id);
+          return existing && existing.quantity >= course.available;
+        },
         addToCart(course) {
-          const exists = this.cart.find(item => item.id === course.id);
-          if (exists) {
-            this.showNotification(`${course.title} is already in your cart.`, 'error');
-            return;
+          const existing = this.cart.find(it => it.id === course.id);
+          if (existing) {
+            if ((existing.quantity || 0) < course.available) {
+              existing.quantity = (existing.quantity || 0) + 1;
+              this.showNotification(`${course.title} quantity updated (${existing.quantity}).`);
+            } else {
+              this.showNotification(`Only ${course.available} available for ${course.title}.`, 'error');
+              return;
+            }
+          } else {
+            this.cart.push({
+              id: course.id,
+              title: course.title,
+              price: course.price,
+              image: course.image,
+              instructor: course.instructor,
+              category: course.category,
+              available: course.available,
+              location: course.location,
+              quantity: 1
+            });
+            this.showNotification(`${course.title} added to cart!`);
           }
-          this.cart.push(course);
           localStorage.setItem('cart', JSON.stringify(this.cart));
-          this.showNotification(`${course.title} added to cart!`);
         },
         goToCart() {
-          if (this.cart.length === 0) {
+          if (!this.cart || this.cart.length === 0) {
             this.showNotification('Your cart is empty.', 'error');
             return;
           }
@@ -284,9 +345,20 @@
           this.toastMessage = message;
           this.toastType = type;
           this.showToast = true;
-          setTimeout(() => {
-            this.showToast = false;
-          }, 3000);
+          setTimeout(() => { this.showToast = false; }, 3000);
+        }
+      },
+      mounted() {
+        const storedQuery = localStorage.getItem('searchQuery');
+        if (storedQuery) {
+          this.searchQuery = storedQuery;
+        }
+
+        // ensure cart shape is consistent
+        if (Array.isArray(this.cart)) {
+          this.cart = this.cart.map(it => ({ ...it, quantity: it.quantity || 0 }));
+        } else {
+          this.cart = [];
         }
       }
     });

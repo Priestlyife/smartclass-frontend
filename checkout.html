@@ -41,7 +41,7 @@ input, select {
   font-size: 14px;
   width: 100%;
 }
-input[type=checkbox] { width: auto; margin-right: 6px; }
+input[type=checkbox], input[type=radio] { width: auto; margin-right: 6px; }
 
 /* Gift + Delivery + Payment unified section */
 .options-section {
@@ -51,24 +51,21 @@ input[type=checkbox] { width: auto; margin-right: 6px; }
   border: 1px solid #eee;
 }
 .option-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
-.option-group label { font-weight: 600; }
+.option-group label { font-weight: 600; display: block; margin-bottom: 4px; }
 .delivery-options, .payment-options {
   display: flex;
   gap: 15px;
   flex-wrap: wrap;
 }
-.delivery-options div, .payment-option {
+.delivery-options label, .payment-option {
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
 }
-.payment-option i { font-size: 20px; color: #4c51bf; }
+.payment-option i { font-size: 22px; color: #4c51bf; }
 .card-details {
   margin-top: 10px;
   display: grid;
@@ -98,7 +95,13 @@ input[type=checkbox] { width: auto; margin-right: 6px; }
 .cart-info h4 { margin: 0; font-size: 15px; color: #222; }
 .cart-info p { margin: 2px 0 0; font-size: 13px; color: #555; }
 .cart-price { font-weight: 700; color: #4c51bf; font-size: 15px; }
-.total-box { text-align: right; margin-top: 15px; font-size: 17px; font-weight: bold; }
+.total-box {
+  text-align: right;
+  margin-top: 15px;
+  font-size: 17px;
+  font-weight: bold;
+}
+.total-line { display: flex; justify-content: space-between; padding: 4px 0; }
 
 /* Buttons */
 .btn-row {
@@ -174,7 +177,7 @@ footer { text-align: center; margin: 30px 0; color: #555; font-size: 14px; }
         <div class="form-group"><label>Zip/Postal Code</label><input v-model.number="order.zip" type="number" placeholder="e.g., 90001"></div>
       </div>
 
-      <!-- Compact Unified Section -->
+      <!-- Options -->
       <div class="options-section">
         <div class="option-group">
           <label><input type="checkbox" v-model="order.gift"> Ship As Gift?</label>
@@ -183,13 +186,13 @@ footer { text-align: center; margin: 30px 0; color: #555; font-size: 14px; }
         <div class="option-group">
           <label>Delivery:</label>
           <div class="delivery-options">
-            <label><input type="radio" value="Home" v-model="order.method"> Home</label>
-            <label><input type="radio" value="Business" v-model="order.method"> Business</label>
+            <label><input type="radio" value="standard" v-model="order.delivery"> Standard ($5)</label>
+            <label><input type="radio" value="express" v-model="order.delivery"> Express ($15)</label>
           </div>
         </div>
 
         <div class="option-group">
-          <label>Payment:</label>
+          <label>Payment Method:</label>
           <div class="payment-options">
             <label class="payment-option">
               <input type="radio" value="card" v-model="payment.method">
@@ -219,7 +222,10 @@ footer { text-align: center; margin: 30px 0; color: #555; font-size: 14px; }
     <div class="right">
       <div class="section">
         <h3>Order Summary</h3>
-        <div v-if="cart.length===0">🛒 Your cart is empty. <a href="course.html" style="color:#4c51bf;font-weight:bold;">Browse Courses</a></div>
+        <div v-if="cart.length===0">
+          🛒 Your cart is empty.
+          <a href="course.html" style="color:#4c51bf;font-weight:bold;">Browse Courses</a>
+        </div>
         <div v-else>
           <div class="cart-item" v-for="(item,index) in cart" :key="index">
             <div class="cart-details">
@@ -227,16 +233,24 @@ footer { text-align: center; margin: 30px 0; color: #555; font-size: 14px; }
               <div class="cart-info">
                 <h4>{{ item.title }}</h4>
                 <p>{{ item.category }} • {{ item.instructor }}</p>
+                <small>Qty: {{ item.quantity }}</small>
               </div>
             </div>
-            <div class="cart-price">${{ item.price }}</div>
+            <div class="cart-price">${{ (item.price * item.quantity).toFixed(2) }}</div>
           </div>
-          <div class="total-box">Total: ${{ totalPrice.toFixed(2) }}</div>
+
+          <div class="total-box">
+            <div class="total-line"><span>Subtotal:</span> <span>${{ subtotal.toFixed(2) }}</span></div>
+            <div class="total-line"><span>Delivery:</span> <span>${{ deliveryFee.toFixed(2) }}</span></div>
+            <hr>
+            <div class="total-line"><span>Total:</span> <span>${{ totalPrice.toFixed(2) }}</span></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Toast -->
   <div v-if="toastMessage" :class="['toast', toastType, { show: showToast }]">{{ toastMessage }}</div>
   <footer>&copy; 2025 SmartClass. All rights reserved.</footer>
 </div>
@@ -246,27 +260,44 @@ new Vue({
   el:'#app',
   data:{
     cart: JSON.parse(localStorage.getItem('cart')) || [],
-    order: { firstName:'', lastName:'', email:'', address:'', city:'', state:'', zip:null, gift:false, method:'' },
-    states:['Alabama','Alaska','California','New York','Texas','Florida','Illinois'],
+    order: { firstName:'', lastName:'', email:'', address:'', city:'', state:'', zip:null, gift:false, delivery:'' },
+    states:['Abuja','Lagos','Kano','Rivers','Oyo','Kaduna','Edo','Enugu'],
     payment:{ method:'', cardNumber:'', expiry:'', cvv:'' },
     toastMessage:'', showToast:false, toastType:''
   },
   computed:{
-    totalPrice(){ return this.cart.reduce((sum,item)=>sum+item.price,0); }
+    subtotal(){ return this.cart.reduce((sum,item)=>sum+(item.price*item.quantity),0); },
+    deliveryFee(){
+      if(this.order.delivery==='express') return 15;
+      if(this.order.delivery==='standard') return 5;
+      return 0;
+    },
+    totalPrice(){ return this.subtotal + this.deliveryFee; }
   },
   methods:{
     goBack(){ window.location.href='cart.html'; },
-    showNotification(message,type=''){ this.toastMessage=message; this.toastType=type; this.showToast=true; setTimeout(()=>{this.showToast=false},3000); },
+    showNotification(message,type=''){ 
+      this.toastMessage=message; 
+      this.toastType=type; 
+      this.showToast=true; 
+      setTimeout(()=>{this.showToast=false},3000); 
+    },
     placeOrder(){
       if(this.cart.length===0){ this.showNotification('Cart is empty','error'); return; }
-      if(!this.order.firstName || !this.order.lastName || !this.order.email || !this.order.address || !this.order.city || !this.order.state || !this.order.zip){ this.showNotification('Fill in all shipping info','error'); return; }
-      if(!this.order.method){ this.showNotification('Select delivery method','error'); return; }
+      if(!this.order.firstName || !this.order.lastName || !this.order.email || !this.order.address || !this.order.city || !this.order.state || !this.order.zip){
+        this.showNotification('Fill in all shipping info','error'); return;
+      }
+      if(!this.order.delivery){ this.showNotification('Select delivery option','error'); return; }
       if(!this.payment.method){ this.showNotification('Select payment method','error'); return; }
-      if(this.payment.method==='card' && (!this.payment.cardNumber || !this.payment.expiry || !this.payment.cvv)){ this.showNotification('Fill in card details','error'); return; }
+      if(this.payment.method==='card' && (!this.payment.cardNumber || !this.payment.expiry || !this.payment.cvv)){
+        this.showNotification('Fill in card details','error'); return;
+      }
 
-      this.showNotification('Order placed successfully!');
-      localStorage.removeItem('cart'); this.cart=[];
-      this.order={ firstName:'', lastName:'', email:'', address:'', city:'', state:'', zip:null, gift:false, method:'' };
+      // Success
+      this.showNotification('✅ Order placed successfully!');
+      localStorage.removeItem('cart');
+      this.cart=[];
+      this.order={ firstName:'', lastName:'', email:'', address:'', city:'', state:'', zip:null, gift:false, delivery:'' };
       this.payment={ method:'', cardNumber:'', expiry:'', cvv:'' };
     }
   }
