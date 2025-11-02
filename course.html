@@ -84,7 +84,16 @@
     .search-input { width:260px; border-top-right-radius:0; border-bottom-right-radius:0; }
     .search-btn { background:#4c51bf; color:#fff; border-top-left-radius:0; border-bottom-left-radius:0; cursor:pointer; }
     .clear-btn { background:#ff3b2f; color:#fff; border:none; cursor:pointer; padding:9px 12px; border-radius:6px; }
-    @media (max-width:900px) { .filter-toolbar{flex-direction:column;align-items:stretch;} .search-input{width:100%;} }
+
+    /* Categories-dropdown panel */
+    .cat-btn { background:#fff; border:1px solid #dcdfe6; padding:9px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:8px; }
+    .cat-panel { position:absolute; background:#fff; box-shadow:0 6px 18px rgba(0,0,0,0.08); border-radius:8px; padding:12px; width:340px; z-index:80; margin-top:6px; }
+    .cat-panel .row { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+    .cat-panel label { font-size:13px; min-width:90px; color:#444; }
+    .cat-panel select { flex:1; padding:8px; border-radius:6px; border:1px solid #e6e6ea; }
+
+    /* responsive */
+    @media (max-width:900px) { .filter-toolbar{flex-direction:column;align-items:stretch;} .search-input{width:100%;} .cat-panel{width:100%; position:static; box-shadow:none;} }
   </style>
 </head>
 <body>
@@ -116,12 +125,67 @@
 
     <!-- Filter & Search Bar -->
     <section class="courses-header-bar">
-      <div class="filter-toolbar" role="toolbar" aria-label="Course filters">
+      <div class="filter-toolbar" role="toolbar" aria-label="Course filters" style="position:relative;">
         <div class="left-controls">
-          <select v-model="selectedCategory" class="filter-select" aria-label="Filter by category">
-            <option value="">All Categories</option>
-            <option v-for="cat in categories" :key="cat">{{ cat }}</option>
-          </select>
+          <!-- Categories button which opens the panel -->
+          <div style="position:relative;">
+            <button class="cat-btn" @click="toggleCatPanel" :aria-expanded="catPanelOpen">
+              <i class="fas fa-filter"></i> Categories
+              <i :class="['fas', catPanelOpen ? 'fa-chevron-up' : 'fa-chevron-down']" style="margin-left:auto;"></i>
+            </button>
+
+            <!-- The panel that appears when Categories clicked -->
+            <div v-if="catPanelOpen" class="cat-panel" @click.stop>
+              <div class="row">
+                <label>Category</label>
+                <select v-model="selectedCategory">
+                  <option value="">All Categories</option>
+                  <option v-for="cat in categories" :key="cat">{{ cat }}</option>
+                </select>
+              </div>
+
+              <div class="row">
+                <label>Availability</label>
+                <select v-model="selectedAvailability">
+                  <option value="">All</option>
+                  <option value="available">Available</option>
+                  <option value="unavailable">Unavailable</option>
+                </select>
+              </div>
+
+              <div class="row">
+                <label>Price</label>
+                <select v-model="selectedPriceSort">
+                  <option value="">None</option>
+                  <option value="priceLow">Low → High</option>
+                  <option value="priceHigh">High → Low</option>
+                </select>
+              </div>
+
+              <div class="row">
+                <label>Rating</label>
+                <select v-model="selectedRatingSort">
+                  <option value="">None</option>
+                  <option value="ratingDesc">Top Rated</option>
+                </select>
+              </div>
+
+              <div class="row">
+                <label>Location</label>
+                <select v-model="selectedLocation">
+                  <option value="">All Locations</option>
+                  <option v-for="loc in locations" :key="loc">{{ loc }}</option>
+                </select>
+              </div>
+
+              <div style="display:flex; gap:8px; margin-top:8px; justify-content:flex-end;">
+                <button class="clear-btn" @click="clearCatPanel">Reset</button>
+                <button class="search-btn" @click="closeCatPanel">Apply</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- (Optional) quick sort select kept visible -->
           <select v-model="selectedSort" class="filter-select" aria-label="Sort courses">
             <option value="">Sort By</option>
             <option value="rating">Best Rating</option>
@@ -215,11 +279,16 @@
       data: {
         searchQuery: '',
         selectedCategory: '',
+        selectedAvailability: '',
+        selectedLocation: '',
+        selectedPriceSort: '',
+        selectedRatingSort: '',
         selectedSort: '',
         cart: JSON.parse(localStorage.getItem('cart')) || [],
         toastMessage: '',
         showToast: false,
         toastType: '',
+        catPanelOpen: false,
         courses: [
           // --- Development ---
           { id: 1, title: 'Web Development Bootcamp', category: 'Development', instructor: 'John Doe', rating: 4.8, reviews: 10200, price: 49.99, available: 7, location: 'Apo District, Abuja', image: 'images/web development.jpg', details: ['HTML, CSS, JS', 'Real projects', 'Deploy professionally'] },
@@ -252,32 +321,45 @@
       },
       computed: {
         categories() {
-          const cats = this.courses.map(c => c.category);
-          return [...new Set(cats)];
+          return [...new Set(this.courses.map(c => c.category))];
+        },
+        locations() {
+          return [...new Set(this.courses.map(c => c.location))];
         },
         filteredCourses() {
-          let filtered = this.courses.slice(); // copy so we don't mutate original when sorting
+          let filtered = this.courses.slice();
 
-          if (this.selectedCategory) {
-            filtered = filtered.filter(c => c.category === this.selectedCategory);
-          }
+          // Category filter
+          if (this.selectedCategory) filtered = filtered.filter(c => c.category === this.selectedCategory);
 
+          // Availability filter (available >0 means in stock)
+          if (this.selectedAvailability === 'available') filtered = filtered.filter(c => c.available && c.available > 0);
+          else if (this.selectedAvailability === 'unavailable') filtered = filtered.filter(c => !c.available || c.available === 0);
+
+          // Location filter
+          if (this.selectedLocation) filtered = filtered.filter(c => c.location === this.selectedLocation);
+
+          // Search text
           if (this.searchQuery.trim() !== '') {
-            const q = this.searchQuery.toLowerCase().split(' ').filter(Boolean);
-            filtered = filtered.filter(c => {
-              const title = c.title.toLowerCase();
-              const category = c.category.toLowerCase();
-              const instructor = c.instructor.toLowerCase();
-              return q.some(word => title.includes(word) || category.includes(word) || instructor.includes(word));
-            });
+            const q = this.searchQuery.toLowerCase();
+            filtered = filtered.filter(c =>
+              c.title.toLowerCase().includes(q) ||
+              c.category.toLowerCase().includes(q) ||
+              c.instructor.toLowerCase().includes(q)
+            );
           }
 
-          if (this.selectedSort === 'rating') {
-            filtered = filtered.slice().sort((a, b) => b.rating - a.rating);
-          } else if (this.selectedSort === 'priceLow') {
-            filtered = filtered.slice().sort((a, b) => a.price - b.price);
-          } else if (this.selectedSort === 'priceHigh') {
-            filtered = filtered.slice().sort((a, b) => b.price - a.price);
+          // Sorting precedence: explicit panel sorts (price/rating) override quick sort select if set
+          if (this.selectedRatingSort === 'ratingDesc') filtered.sort((a, b) => b.rating - a.rating);
+
+          if (this.selectedPriceSort === 'priceLow') filtered.sort((a, b) => a.price - b.price);
+          else if (this.selectedPriceSort === 'priceHigh') filtered.sort((a, b) => b.price - a.price);
+
+          // fallback/quick sort select
+          if (!this.selectedPriceSort && !this.selectedRatingSort) {
+            if (this.selectedSort === 'rating') filtered.sort((a, b) => b.rating - a.rating);
+            else if (this.selectedSort === 'priceLow') filtered.sort((a, b) => a.price - b.price);
+            else if (this.selectedSort === 'priceHigh') filtered.sort((a, b) => b.price - a.price);
           }
 
           return filtered;
@@ -290,8 +372,25 @@
         formatPrice(p) {
           return Number(p).toFixed(2);
         },
+        toggleCatPanel() {
+          this.catPanelOpen = !this.catPanelOpen;
+        },
+        closeCatPanel() {
+          this.catPanelOpen = false;
+        },
+        clearCatPanel() {
+          this.selectedCategory = '';
+          this.selectedAvailability = '';
+          this.selectedPriceSort = '';
+          this.selectedRatingSort = '';
+          this.selectedLocation = '';
+        },
         clearFilters() {
           this.selectedCategory = '';
+          this.selectedAvailability = '';
+          this.selectedLocation = '';
+          this.selectedPriceSort = '';
+          this.selectedRatingSort = '';
           this.selectedSort = '';
           this.searchQuery = '';
           localStorage.removeItem('searchQuery');
@@ -350,9 +449,7 @@
       },
       mounted() {
         const storedQuery = localStorage.getItem('searchQuery');
-        if (storedQuery) {
-          this.searchQuery = storedQuery;
-        }
+        if (storedQuery) this.searchQuery = storedQuery;
 
         // ensure cart shape is consistent
         if (Array.isArray(this.cart)) {
@@ -360,6 +457,11 @@
         } else {
           this.cart = [];
         }
+
+        // close panel if clicked outside
+        document.addEventListener('click', (e) => {
+          if (!this.$el.contains(e.target)) this.catPanelOpen = false;
+        });
       }
     });
   </script>
