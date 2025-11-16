@@ -276,144 +276,225 @@
  <script>
 new Vue({
   el: "#app",
-
   data: {
     loading: true,
-
     courses: [],
     filteredCourses: [],
-
-    // Filters
     searchQuery: "",
     selectedCategory: "",
-    selectedAvailability: "all",
+    // note: HTML panel uses "available" / "unavailable"
+    selectedAvailability: "",
     selectedLocation: "",
+    // quick sort (top-right) uses "rating", "priceLow", "priceHigh"
     selectedSort: "",
-
-    // UI
+    // panel-specific sorts used in your HTML
+    selectedPriceSort: "",
+    selectedRatingSort: "",
     catPanelOpen: false,
     showToast: false,
     toastMessage: "",
     toastType: "",
-
-    // Meta lists
     categories: [],
     locations: [],
-
-    // Cart
-    cart: JSON.parse(localStorage.getItem("cart") || "[]")
+    cart: JSON.parse(localStorage.getItem("cart") || "[]"),
   },
 
   created() {
-    fetch("http://localhost:5000/api/courses")
-      .then(res => res.json())
+    console.log("[SmartClass] created() — start fetch");
+    const url = "http://localhost:5000/api/courses";
+    fetch(url)
+      .then(res => {
+        console.log("[SmartClass] fetch status:", res.status);
+        if (!res.ok) throw new Error("Network response not ok: " + res.status);
+        return res.json();
+      })
       .then(data => {
         this.loading = false;
-
-        this.courses = data.map(c => ({
+        this.courses = (Array.isArray(data) ? data : []).map(c => ({
           ...c,
+          // ensure numeric types
           price: Number(c.price || 0),
           rating: Number(c.rating || 0),
           available: Number(c.available || 0),
-          image: c.image || "https://via.placeholder.com/400x250?text=No+Image"
+          image: c.image && c.image.includes("http") ? c.image : "https://via.placeholder.com/400x250?text=No+Image"
         }));
-
         this.filteredCourses = [...this.courses];
+        this.categories = Array.from(new Set(this.courses.map(c => c.category || "Other"))).sort();
+        this.locations = Array.from(new Set(this.courses.map(c => c.location || "Unknown"))).sort();
+        console.log("[SmartClass] categories:", this.categories, "locations:", this.locations);
 
-        this.categories = [...new Set(this.courses.map(c => c.category))];
-        this.locations = [...new Set(this.courses.map(c => c.location))];
+        // If a search query was set from index, use it
+        const savedSearch = localStorage.getItem("searchQuery") || "";
+        if (savedSearch) {
+          this.searchQuery = savedSearch;
+          localStorage.removeItem("searchQuery");
+        }
 
         this.filterCourses();
       })
       .catch(err => {
         this.loading = false;
-        this.showToastMsg("Could not load courses", "error");
+        console.error("[SmartClass] fetch error:", err);
+        this.showToastMsg("Failed to load courses. See console.", "error");
       });
   },
 
   computed: {
     cartTotalItems() {
-      return this.cart.reduce((sum, it) => sum + (it.quantity || 1), 0);
+      return this.cart.reduce((s, it) => s + (it.quantity || 1), 0);
     }
   },
 
   methods: {
+    // UI panel
     toggleCatPanel() {
       this.catPanelOpen = !this.catPanelOpen;
     },
-
     closeCatPanel() {
       this.catPanelOpen = false;
     },
 
-    formatPrice(price) {
-      return price.toFixed(2);
+    // Reset category panel fields (button in panel calls this)
+    clearCatPanel() {
+      this.selectedCategory = "";
+      this.selectedAvailability = "";
+      this.selectedPriceSort = "";
+      this.selectedRatingSort = "";
+      this.selectedLocation = "";
+      // apply reset immediately
+      this.filterCourses();
+      this.showToastMsg("Category filters reset", "success");
     },
 
-    addToCart(course) {
-      const existing = this.cart.find(c => c._id === course._id);
-      if (existing) {
-        existing.quantity = (existing.quantity || 1) + 1;
-      } else {
-        this.cart.push({ ...course, quantity: 1 });
+    // Search triggered by search button / Enter
+    searchCourses() {
+      // if on this page already, just filter; if from index we set searchQuery and redirected here
+      if (!this.searchQuery || this.searchQuery.trim() === "") {
+        // if empty, show all
+        this.filterCourses();
+        this.showToastMsg("Showing all courses", "info");
+        return;
       }
-      localStorage.setItem("cart", JSON.stringify(this.cart));
-      this.showToastMsg("Added to cart", "success");
+      this.filterCourses();
+      this.showToastMsg(`Search: "${this.searchQuery}"`, "success");
+    },
+
+    // price formatting - template expects this
+    formatPrice(v) {
+      const n = Number(v || 0);
+      return n.toFixed(2);
+    },
+
+    // cart functions
+    addToCart(course) {
+      try {
+        const idx = this.cart.findIndex(it => it._id === course._id || it.id === course.id);
+        if (idx >= 0) {
+          // respect available seats
+          if ((this.cart[idx].quantity || 1) < (course.available || Infinity)) {
+            this.cart[idx].quantity = (this.cart[idx].quantity || 1) + 1;
+          } else {
+            this.showToastMsg("No more seats available", "warning");
+            return;
+          }
+        } else {
+          this.cart.push({ ...course, quantity: 1 });
+        }
+        localStorage.setItem("cart", JSON.stringify(this.cart));
+        this.showToastMsg("Added to cart", "success");
+      } catch (e) {
+        console.error("addToCart error", e);
+      }
     },
 
     goToCart() {
       window.location.href = "cart.html";
     },
 
-    showToastMsg(msg, type) {
+    showToastMsg(msg, type = "") {
       this.toastMessage = msg;
       this.toastType = type;
       this.showToast = true;
       setTimeout(() => (this.showToast = false), 2000);
     },
 
-    filterCourses() {
-      let list = [...this.courses];
-
-      // Search
-      if (this.searchQuery.trim()) {
-        const q = this.searchQuery.toLowerCase();
-        list = list.filter(c =>
-          c.title.toLowerCase().includes(q) ||
-          c.instructor.toLowerCase().includes(q)
-        );
-      }
-
-      // Category
-      if (this.selectedCategory) {
-        list = list.filter(c => c.category === this.selectedCategory);
-      }
-
-      // Availability
-      if (this.selectedAvailability === "inStock") {
-        list = list.filter(c => c.available > 0);
-      }
-      if (this.selectedAvailability === "outOfStock") {
-        list = list.filter(c => c.available <= 0);
-      }
-
-      // Location
-      if (this.selectedLocation) {
-        list = list.filter(c => c.location === this.selectedLocation);
-      }
-
-      // Sorting
-      if (this.selectedSort === "priceAsc") {
-        list.sort((a, b) => a.price - b.price);
-      } else if (this.selectedSort === "priceDesc") {
-        list.sort((a, b) => b.price - a.price);
-      } else if (this.selectedSort === "rating") {
-        list.sort((a, b) => b.rating - a.rating);
-      }
-
-      this.filteredCourses = list;
+    // used in template to disable add button if already at max
+    isAtMax(course) {
+      const item = this.cart.find(c => (c._id && c._id === course._id) || (c.id && c.id === course.id));
+      if (!item) return false;
+      return (item.quantity || 1) >= (course.available || 0);
     },
 
+    // MAIN FILTER LOGIC - respects both panel sorts and quick sort
+    filterCourses() {
+      try {
+        console.log("[SmartClass] filterCourses:", {
+          q: this.searchQuery,
+          cat: this.selectedCategory,
+          avail: this.selectedAvailability,
+          pricePanel: this.selectedPriceSort,
+          ratingPanel: this.selectedRatingSort,
+          quickSort: this.selectedSort,
+          location: this.selectedLocation
+        });
+
+        let list = [...this.courses];
+
+        // Search (title / instructor)
+        if (this.searchQuery && this.searchQuery.trim() !== "") {
+          const q = this.searchQuery.toLowerCase();
+          list = list.filter(c =>
+            (c.title && c.title.toLowerCase().includes(q)) ||
+            (c.instructor && c.instructor.toLowerCase().includes(q))
+          );
+        }
+
+        // Category
+        if (this.selectedCategory) {
+          list = list.filter(c => (c.category || "") === this.selectedCategory);
+        }
+
+        // Availability (panel uses 'available' / 'unavailable')
+        if (this.selectedAvailability === "available") {
+          list = list.filter(c => Number(c.available || 0) > 0);
+        } else if (this.selectedAvailability === "unavailable") {
+          list = list.filter(c => Number(c.available || 0) <= 0);
+        }
+
+        // Location
+        if (this.selectedLocation) {
+          list = list.filter(c => (c.location || "") === this.selectedLocation);
+        }
+
+        // Panel Price Sort (values: priceLow, priceHigh)
+        if (this.selectedPriceSort === "priceLow") {
+          list.sort((a, b) => a.price - b.price);
+        } else if (this.selectedPriceSort === "priceHigh") {
+          list.sort((a, b) => b.price - a.price);
+        }
+
+        // Panel Rating Sort (value: ratingDesc)
+        if (this.selectedRatingSort === "ratingDesc") {
+          list.sort((a, b) => b.rating - a.rating);
+        }
+
+        // Quick Sort (top-right dropdown) - values: rating, priceLow, priceHigh
+        if (this.selectedSort === "rating") {
+          list.sort((a, b) => b.rating - a.rating);
+        } else if (this.selectedSort === "priceLow") {
+          list.sort((a, b) => a.price - b.price);
+        } else if (this.selectedSort === "priceHigh") {
+          list.sort((a, b) => b.price - a.price);
+        }
+
+        this.filteredCourses = list;
+        console.log("[SmartClass] filtered count:", this.filteredCourses.length);
+      } catch (e) {
+        console.error("[SmartClass] filterCourses error:", e);
+      }
+    },
+
+    // apply & clear actions used in HTML
     applyFilters() {
       this.filterCourses();
       this.closeCatPanel();
@@ -422,23 +503,29 @@ new Vue({
     clearFilters() {
       this.searchQuery = "";
       this.selectedCategory = "";
-      this.selectedAvailability = "all";
+      this.selectedAvailability = "";
       this.selectedLocation = "";
       this.selectedSort = "";
+      this.selectedPriceSort = "";
+      this.selectedRatingSort = "";
       this.filterCourses();
       this.showToastMsg("Filters cleared", "success");
     }
   },
 
   watch: {
+    searchQuery() { this.filterCourses(); },
     selectedCategory() { this.filterCourses(); },
     selectedAvailability() { this.filterCourses(); },
     selectedLocation() { this.filterCourses(); },
     selectedSort() { this.filterCourses(); },
-    searchQuery() { this.filterCourses(); }
+    selectedPriceSort() { this.filterCourses(); },
+    selectedRatingSort() { this.filterCourses(); }
   }
 });
 </script>
+
+
 
 
 
