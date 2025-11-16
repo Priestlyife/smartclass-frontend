@@ -176,34 +176,36 @@
 new Vue({
   el: '#app',
   data: {
+    loading: true,
     searchQuery: '',
     cart: JSON.parse(localStorage.getItem('cart') || '[]'),
     toastMessage: '',
     toastType: '',
     showToast: false,
-    courses: []   // NOW EMPTY → will be filled by backend
+    courses: []
   },
 
   created() {
-    // Fetch real courses from your backend
     fetch("http://localhost:5000/api/courses")
       .then(res => res.json())
       .then(data => {
-        // ensure correct numeric fields
         const cleaned = data.map(c => ({
           ...c,
-          price: Number(c.price || 0).toFixed(2),
+          _id: c._id || c.id,          // ensure consistent id
+          price: Number(c.price || 0), // keep number (not string)
           rating: Number(c.rating || 0),
           available: Number(c.available || 0),
           image: c.image || "https://via.placeholder.com/400x250?text=No+Image"
         }));
 
-        // show only first 6 as popular
+        // show first 6 courses
         this.courses = cleaned.slice(0, 6);
+        this.loading = false;
       })
       .catch(err => {
         console.error("Index fetch error:", err);
         this.showNotification("Failed to load courses", "error");
+        this.loading = false;
       });
   },
 
@@ -214,6 +216,10 @@ new Vue({
   },
 
   methods: {
+    formatPrice(value) {
+      return Number(value || 0).toFixed(2);
+    },
+
     showNotification(msg, type = '') {
       this.toastMessage = msg;
       this.toastType = type;
@@ -226,7 +232,7 @@ new Vue({
         this.showNotification("Enter a search term", "error");
         return;
       }
-      localStorage.setItem("searchQuery", this.searchQuery);
+      localStorage.setItem("searchQuery", this.searchQuery.trim());
       window.location.href = "course.html";
     },
 
@@ -235,7 +241,9 @@ new Vue({
     },
 
     addToCart(course) {
-      const index = this.cart.findIndex(c => c._id === course._id);
+      const id = course._id; // always use consistent id
+      const index = this.cart.findIndex(c => c._id === id);
+
       if (index >= 0) {
         if (this.cart[index].quantity < course.available) {
           this.cart[index].quantity++;
@@ -246,12 +254,14 @@ new Vue({
       } else {
         this.cart.push({ ...course, quantity: 1 });
       }
+
       localStorage.setItem("cart", JSON.stringify(this.cart));
       this.showNotification("Added to cart");
     }
   }
 });
 </script>
+
 
 </body>
 </html>

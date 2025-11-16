@@ -210,56 +210,65 @@
     </div>
 
     <!-- All Courses -->
-    <section class="courses" id="courses">
-      <div v-if="filteredCourses.length === 0" class="no-course">
-        ❌ No courses found for "<strong>{{ searchQuery }}</strong>"
+<section class="courses" id="courses">
+
+  <!-- Loading State -->
+  <div v-if="loading" class="no-course">
+    ⏳ Loading courses...
+  </div>
+
+  <!-- No Results AFTER loading & searching -->
+  <div v-else-if="filteredCourses.length === 0 && searchQuery.trim() !== ''" class="no-course">
+    ❌ No courses found for "<strong>{{ searchQuery }}</strong>"
+  </div>
+
+  <!-- Show ALL courses when loaded -->
+  <div v-else class="course-grid">
+
+    <div class="course-card" v-for="course in filteredCourses" :key="course.id">
+
+      <img :src="course.image" :alt="course.title">
+
+      <div class="info">
+        <h3>{{ course.title }}</h3>
+        <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
+        <div class="rating-box">
+          <span class="star">★</span> {{ course.rating }}
+          <span class="review-count"> ({{ course.reviews }} ratings)</span>
+        </div>
+        <div class="price">${{ formatPrice(course.price) }}</div>
+        <p class="course-extra">
+          📍 {{ course.location }}<br>
+          🧾 Available: <strong>{{ course.available }}</strong>
+        </p>
       </div>
 
-      <div v-else class="course-grid">
-        <div class="course-card" v-for="course in filteredCourses" :key="course.id">
-          <img :src="course.image" :alt="course.title">
-          <div class="info">
-            <h3>{{ course.title }}</h3>
-            <p class="instructor">{{ course.category }} • {{ course.instructor }}</p>
-            <div class="rating-box">
-              <span class="star">★</span> {{ course.rating }}
-              <span class="review-count"> ({{ course.reviews }} ratings)</span>
-            </div>
-            <div class="price">${{ formatPrice(course.price) }}</div>
+      <!-- CORRECT OVERLAY (ONLY ONE) -->
+      <div class="overlay">
+        <div class="overlay-left">
+          <h4>{{ course.title }}</h4>
+          <p><strong>Bestseller</strong> • Updated Oct 2025</p>
+          <p>2h • All Levels • Subtitles</p>
+          <ul>
+            <li v-for="(d, i) in course.details" :key="i">{{ d }}</li>
+          </ul>
+        </div>
 
-            <p class="course-extra">
-              📍 {{ course.location }}<br>
-              🧾 Available: <strong>{{ course.available }}</strong>
-            </p>
-          </div>
-
-          <!-- overlay with full details -->
-          <div class="overlay" role="region" aria-label="Course details">
-            <div class="overlay-left">
-              <h4>{{ course.title }}</h4>
-              <p style="margin:6px 0; font-size:13px; color:#444;"><strong>Bestseller</strong> • Updated Oct 2025</p>
-              <p style="margin:4px 0; font-size:13px; color:#444;">2h • All Levels • Subtitles</p>
-
-              <ul class="details-list">
-                <li v-for="(d, i) in course.details" :key="i">{{ d }}</li>
-              </ul>
-
-              <p style="margin:6px 0; font-size:13px; color:#666;">
-                <strong>Location:</strong> {{ course.location }} &nbsp; • &nbsp;
-                <strong>Available:</strong> {{ course.available }}
-              </p>
-            </div>
-
-            <div class="overlay-bottom">
-              <span class="overlay-price">${{ formatPrice(course.price) }}</span>
-              <button class="btn-cart" @click="addToCart(course)" :disabled="isAtMax(course)">
-                <span v-if="!isAtMax(course)">Add to Cart</span>
-                <span v-else>Sold Out</span>
-              </button>
-            </div>
-          </div>
+        <div class="overlay-bottom">
+          <span class="overlay-price">${{ formatPrice(course.price) }}</span>
+          <button class="btn-cart" @click="addToCart(course)" :disabled="isAtMax(course)">
+            <span v-if="!isAtMax(course)">Add to Cart</span>
+            <span v-else>Sold Out</span>
+          </button>
         </div>
       </div>
+
+  </div>
+
+</div>
+
+
+         
     </section>
 
     <!-- Toast -->
