@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartClass | Orders (Admin)</title>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+body {
+  background: #f7f8fa;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 32px;
+  color: #333;
+  font-weight: 800;
+}
+
+.orders-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.order-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 25px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+  border-left: 6px solid #4c51bf;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.order-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #4c51bf;
+}
+
+.order-meta {
+  font-size: 14px;
+  color: #666;
+}
+
+.order-details p {
+  margin: 5px 0;
+  font-size: 15px;
+}
+
+.items-box {
+  background: #f9f9f9;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+  border: 1px solid #eee;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item img {
+  width: 70px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.item-info h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #222;
+}
+
+.item-info small {
+  color: #555;
+}
+
+.total-price {
+  margin-top: 15px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #4c51bf;
+  text-align: right;
+}
+
+.loading {
+  text-align: center;
+  font-size: 18px;
+  color: #333;
+  margin-top: 50px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+  <h1>📦 SmartClass Orders (Admin View)</h1>
+
+  <div v-if="loading" class="loading">
+    ⏳ Loading orders...
+  </div>
+
+  <div class="orders-container">
+    <div class="order-card" v-for="order in orders" :key="order._id">
+
+      <div class="order-header">
+        <h2>Order #{{ order._id.substring(0,6).toUpperCase() }}</h2>
+        <div class="order-meta">
+          {{ formatDate(order.createdAt) }}
+        </div>
+      </div>
+
+      <div class="order-details">
+        <p><strong>Customer:</strong> {{ order.customerName }}</p>
+        <p><strong>Email:</strong> {{ order.email }}</p>
+        <p><strong>Delivery:</strong> {{ order.delivery }}</p>
+        <p><strong>Payment:</strong> {{ order.paymentMethod }}</p>
+        <p><strong>Address:</strong> {{ order.address }}</p>
+      </div>
+
+      <div class="items-box">
+        <strong>Purchased Courses:</strong>
+        <div class="item" v-for="item in order.items">
+          <img :src="item.image" :alt="item.title">
+          <div class="item-info">
+            <h4>{{ item.title }}</h4>
+            <small>{{ item.category }} • Qty: {{ item.quantity }}</small>
+          </div>
+          <div style="margin-left:auto; font-weight:700; color:#4c51bf;">
+            ${{ (item.price * item.quantity).toFixed(2) }}
+          </div>
+        </div>
+      </div>
+
+      <div class="total-price">
+        Total: ${{ order.totalPrice.toFixed(2) }}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+new Vue({
+  el: "#app",
+  data: {
+    orders: [],
+    loading: true
+  },
+  created() {
+    fetch("http://localhost:5000/api/orders")
+      .then(res => res.json())
+      .then(data => {
+        this.orders = data.reverse(); // newest first
+        this.loading = false;
+      })
+      .catch(err => {
+        console.error(err);
+        this.loading = false;
+      });
+  },
+  methods: {
+    formatDate(date) {
+      return new Date(date).toLocaleString();
+    }
+  }
+});
+</script>
+
+</body>
+</html>

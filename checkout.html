@@ -282,24 +282,73 @@ new Vue({
       this.showToast=true; 
       setTimeout(()=>{this.showToast=false},3000); 
     },
-    placeOrder(){
-      if(this.cart.length===0){ this.showNotification('Cart is empty','error'); return; }
-      if(!this.order.firstName || !this.order.lastName || !this.order.email || !this.order.address || !this.order.city || !this.order.state || !this.order.zip){
-        this.showNotification('Fill in all shipping info','error'); return;
-      }
-      if(!this.order.delivery){ this.showNotification('Select delivery option','error'); return; }
-      if(!this.payment.method){ this.showNotification('Select payment method','error'); return; }
-      if(this.payment.method==='card' && (!this.payment.cardNumber || !this.payment.expiry || !this.payment.cvv)){
-        this.showNotification('Fill in card details','error'); return;
-      }
+   placeOrder() {
+  if (this.cart.length === 0) {
+    this.showNotification('Cart is empty', 'error');
+    return;
+  }
 
-      // Success
-      this.showNotification('✅ Order placed successfully!');
-      localStorage.removeItem('cart');
-      this.cart=[];
-      this.order={ firstName:'', lastName:'', email:'', address:'', city:'', state:'', zip:null, gift:false, delivery:'' };
-      this.payment={ method:'', cardNumber:'', expiry:'', cvv:'' };
-    }
+  if (!this.order.firstName || !this.order.lastName || !this.order.email ||
+      !this.order.address || !this.order.city || !this.order.state || !this.order.zip) {
+    this.showNotification('Fill in all shipping info', 'error');
+    return;
+  }
+
+  if (!this.order.delivery) {
+    this.showNotification('Select delivery option', 'error');
+    return;
+  }
+
+  if (!this.payment.method) {
+    this.showNotification('Select payment method', 'error');
+    return;
+  }
+
+  if (this.payment.method === 'card' && 
+     (!this.payment.cardNumber || !this.payment.expiry || !this.payment.cvv)) {
+    this.showNotification('Fill in card details', 'error');
+    return;
+  }
+
+  // ---------- PREPARE ORDER DATA ----------
+  const orderData = {
+    customerName: this.order.firstName + " " + this.order.lastName,
+    email: this.order.email,
+    address: this.order.address + ", " + this.order.city + ", " + this.order.state,
+    items: this.cart,
+    delivery: this.order.delivery,
+    totalPrice: this.totalPrice,
+    paymentMethod: this.payment.method,
+    createdAt: new Date()
+  };
+
+  // ---------- SEND TO BACKEND ----------
+  fetch("http://localhost:5000/api/orders", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(orderData)
+  })
+    .then(res => res.json())
+    .then(data => {
+      console.log("ORDER SAVED:", data);
+
+      this.showNotification("✅ Order placed successfully!", "success");
+
+      // Clear cart
+      localStorage.removeItem("cart");
+      this.cart = [];
+
+      // Redirect to success page
+      setTimeout(() => {
+        window.location.href = "order-success.html";
+      }, 1000);
+    })
+    .catch(err => {
+      console.error("Order Error:", err);
+      this.showNotification("❌ Something went wrong placing your order", "error");
+    });
+}
+
   }
 })
 </script>
