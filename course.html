@@ -274,76 +274,201 @@
   </div>
 
  <script>
-  new Vue({
-    el: "#app",
-    data: {
-      courses: [],
-      filteredCourses: [],
-      searchQuery: "",
-      selectedCategory: "",
-      selectedSort: "",
-      categories: []
-    },
+/* Full Vue 2 script for course.html
+   Replace the existing <script> block in your file with this entire block.
+*/
+new Vue({
+  el: "#app",
+  data: {
+    // data from backend
+    courses: [],
+    // filtered view
+    filteredCourses: [],
+    // UI / filters
+    searchQuery: "",
+    selectedCategory: "",
+    selectedAvailability: "", // e.g. "inStock" or "all"
+    selectedLocation: "",
+    selectedSort: "", // "priceAsc", "priceDesc", "rating"
+    // panels & UI
+    catPanelOpen: false,
+    showToast: false,
+    toastMessage: "",
+    toastType: "",
 
-    mounted() {
-      // Fetch courses from backend
-      fetch("http://localhost:5000/api/courses")
-        .then(res => res.json())
-        .then(data => {
-          this.courses = data;
-          this.filteredCourses = data;
+    // meta lists
+    categories: [],
+    locations: [],
 
-          // Auto-generate unique categories
-          this.categories = [...new Set(data.map(c => c.category))];
-        })
-        .catch(err => console.error("Error loading courses:", err));
-    },
+    // cart
+    cart: JSON.parse(localStorage.getItem("cart") || "[]")
+  },
 
-    methods: {
-      filterCourses() {
-        let list = this.courses;
+  created() {
+    // load the courses from backend
+    fetch("http://localhost:5000/api/courses")
+      .then(res => {
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
+      .then(data => {
+        // ensure consistent shapes and types
+        this.courses = data.map(c => ({
+          ...c,
+          price: (c.price === undefined || c.price === null) ? 0 : Number(c.price),
+          rating: (c.rating === undefined || c.rating === null) ? 0 : Number(c.rating),
+          available: (c.available === undefined || c.available === null) ? 0 : Number(c.available),
+          image: c.image || "https://via.placeholder.com/400x250?text=No+Image"
+        }));
 
-        // Search filter
-        if (this.searchQuery.trim() !== "") {
-          const q = this.searchQuery.toLowerCase();
-          list = list.filter(c =>
-            c.title.toLowerCase().includes(q) ||
-            c.instructor.toLowerCase().includes(q)
-          );
-        }
+        // base filtered list
+        this.filteredCourses = [...this.courses];
 
-        // Category filter
-        if (this.selectedCategory !== "") {
-          list = list.filter(c => c.category === this.selectedCategory);
-        }
+        // build categories and locations
+        this.categories = Array.from(new Set(this.courses.map(c => c.category || "Other"))).sort();
+        this.locations = Array.from(new Set(this.courses.map(c => c.location || "Unknown"))).sort();
 
-        // Sorting filter
-        if (this.selectedSort === "priceAsc") {
-          list = list.sort((a, b) => a.price - b.price);
-        } else if (this.selectedSort === "priceDesc") {
-          list = list.sort((a, b) => b.price - a.price);
-        } else if (this.selectedSort === "rating") {
-          list = list.sort((a, b) => b.rating - a.rating);
-        }
+        // run initial filter (so sorting/availability apply)
+        this.filterCourses();
+      })
+      .catch(err => {
+        console.error("Error loading courses:", err);
+        this.showToastMsg("Failed to load courses. Check server.", "error");
+      });
+  },
 
-        this.filteredCourses = list;
-      },
-
-      addToCart(course) {
-        let cart = JSON.parse(localStorage.getItem("cart")) || [];
-        cart.push(course);
-        localStorage.setItem("cart", JSON.stringify(cart));
-        alert("Course added to cart!");
-      }
-    },
-
-    watch: {
-      searchQuery() { this.filterCourses(); },
-      selectedCategory() { this.filterCourses(); },
-      selectedSort() { this.filterCourses(); }
+  computed: {
+    cartTotalItems() {
+      return this.cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
     }
-  });
+  },
+
+  methods: {
+    // UI & panel
+    toggleCatPanel() {
+      this.catPanelOpen = !this.catPanelOpen;
+    },
+    closeCatPanel() {
+      this.catPanelOpen = false;
+    },
+
+    // Format price for display
+    formatPrice(value) {
+      const v = Number(value || 0);
+      // show with two decimals, and use Naira symbol (₦)
+      return "₦" + v.toFixed(2);
+    },
+
+    // check if course can increase quantity (if you use available)
+    isAtMax(course) {
+      const existing = this.cart.find(it => it._id === course._id);
+      if (!existing) return false;
+      return existing.quantity >= (course.available || 0);
+    },
+
+    // Add course to cart (with quantity)
+    addToCart(course) {
+      const idx = this.cart.findIndex(it => it._id === course._id);
+      if (idx >= 0) {
+        // increment but respect available
+        if ((this.cart[idx].quantity || 1) < (course.available || Infinity)) {
+          this.cart[idx].quantity = (this.cart[idx].quantity || 1) + 1;
+        } else {
+          this.showToastMsg("No more seats available", "warning");
+          return;
+        }
+      } else {
+        this.cart.push({ ...course, quantity: 1 });
+      }
+      localStorage.setItem("cart", JSON.stringify(this.cart));
+      this.showToastMsg("Added to cart", "success");
+    },
+
+    goToCart() {
+      window.location.href = "cart.html";
+    },
+
+    // show toast
+    showToastMsg(msg, type = "") {
+      this.toastMessage = msg;
+      this.toastType = type;
+      this.showToast = true;
+      setTimeout(() => (this.showToast = false), 2200);
+    },
+
+    // Main filtering logic — applied whenever filter inputs change
+    filterCourses() {
+      let list = [...this.courses];
+
+      // Search
+      if (this.searchQuery && this.searchQuery.trim() !== "") {
+        const q = this.searchQuery.toLowerCase();
+        list = list.filter(c =>
+          (c.title && c.title.toLowerCase().includes(q)) ||
+          (c.instructor && c.instructor.toLowerCase().includes(q)) ||
+          (c.category && c.category.toLowerCase().includes(q))
+        );
+      }
+
+      // Category
+      if (this.selectedCategory && this.selectedCategory !== "") {
+        list = list.filter(c => (c.category || "") === this.selectedCategory);
+      }
+
+      // Availability
+      if (this.selectedAvailability === "inStock") {
+        list = list.filter(c => Number(c.available || 0) > 0);
+      } else if (this.selectedAvailability === "outOfStock") {
+        list = list.filter(c => Number(c.available || 0) <= 0);
+      }
+
+      // Location
+      if (this.selectedLocation && this.selectedLocation !== "") {
+        list = list.filter(c => (c.location || "") === this.selectedLocation);
+      }
+
+      // Sorting
+      if (this.selectedSort === "priceAsc") {
+        list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+      } else if (this.selectedSort === "priceDesc") {
+        list.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+      } else if (this.selectedSort === "rating") {
+        list.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+      }
+
+      // set result
+      this.filteredCourses = list;
+    },
+
+    // used by search button if you have one
+    searchCourses() {
+      this.filterCourses();
+      // if you want to navigate to results url:
+      // window.location.href = `course.html?search=${encodeURIComponent(this.searchQuery)}`;
+    },
+
+    clearFilters() {
+      this.selectedCategory = "";
+      this.selectedAvailability = "";
+      this.selectedLocation = "";
+      this.selectedSort = "";
+      this.searchQuery = "";
+      this.filterCourses();
+      this.showToastMsg("Filters cleared");
+    }
+  },
+
+  watch: {
+    // watch all filter fields to update results live
+    searchQuery() { this.filterCourses(); },
+    selectedCategory() { this.filterCourses(); },
+    selectedAvailability() { this.filterCourses(); },
+    selectedLocation() { this.filterCourses(); },
+    selectedSort() { this.filterCourses(); }
+  }
+});
 </script>
+
 
 </body>
 </html>
