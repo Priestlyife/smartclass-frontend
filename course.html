@@ -274,109 +274,86 @@
   </div>
 
  <script>
-/* Full Vue 2 script for course.html
-   Replace the existing <script> block in your file with this entire block.
-*/
 new Vue({
   el: "#app",
+
   data: {
-    // data from backend
+    loading: true,
+
     courses: [],
-    // filtered view
     filteredCourses: [],
-    // UI / filters
+
+    // Filters
     searchQuery: "",
     selectedCategory: "",
-    selectedAvailability: "", // e.g. "inStock" or "all"
+    selectedAvailability: "all",
     selectedLocation: "",
-    selectedSort: "", // "priceAsc", "priceDesc", "rating"
-    // panels & UI
+    selectedSort: "",
+
+    // UI
     catPanelOpen: false,
     showToast: false,
     toastMessage: "",
     toastType: "",
 
-    // meta lists
+    // Meta lists
     categories: [],
     locations: [],
 
-    // cart
+    // Cart
     cart: JSON.parse(localStorage.getItem("cart") || "[]")
   },
 
   created() {
-    // load the courses from backend
     fetch("http://localhost:5000/api/courses")
-      .then(res => {
-        if (!res.ok) throw new Error("Network response was not ok");
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
-        // ensure consistent shapes and types
+        this.loading = false;
+
         this.courses = data.map(c => ({
           ...c,
-          price: (c.price === undefined || c.price === null) ? 0 : Number(c.price),
-          rating: (c.rating === undefined || c.rating === null) ? 0 : Number(c.rating),
-          available: (c.available === undefined || c.available === null) ? 0 : Number(c.available),
+          price: Number(c.price || 0),
+          rating: Number(c.rating || 0),
+          available: Number(c.available || 0),
           image: c.image || "https://via.placeholder.com/400x250?text=No+Image"
         }));
 
-        // base filtered list
         this.filteredCourses = [...this.courses];
 
-        // build categories and locations
-        this.categories = Array.from(new Set(this.courses.map(c => c.category || "Other"))).sort();
-        this.locations = Array.from(new Set(this.courses.map(c => c.location || "Unknown"))).sort();
+        this.categories = [...new Set(this.courses.map(c => c.category))];
+        this.locations = [...new Set(this.courses.map(c => c.location))];
 
-        // run initial filter (so sorting/availability apply)
         this.filterCourses();
       })
       .catch(err => {
-        console.error("Error loading courses:", err);
-        this.showToastMsg("Failed to load courses. Check server.", "error");
+        this.loading = false;
+        this.showToastMsg("Could not load courses", "error");
       });
   },
 
   computed: {
     cartTotalItems() {
-      return this.cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      return this.cart.reduce((sum, it) => sum + (it.quantity || 1), 0);
     }
   },
 
   methods: {
-    // UI & panel
     toggleCatPanel() {
       this.catPanelOpen = !this.catPanelOpen;
     },
+
     closeCatPanel() {
       this.catPanelOpen = false;
     },
 
-    // Format price for display
-    formatPrice(value) {
-      const v = Number(value || 0);
-      // show with two decimals, and use Naira symbol (₦)
-      return "₦" + v.toFixed(2);
+    formatPrice(price) {
+      return price.toFixed(2);
     },
 
-    // check if course can increase quantity (if you use available)
-    isAtMax(course) {
-      const existing = this.cart.find(it => it._id === course._id);
-      if (!existing) return false;
-      return existing.quantity >= (course.available || 0);
-    },
-
-    // Add course to cart (with quantity)
     addToCart(course) {
-      const idx = this.cart.findIndex(it => it._id === course._id);
-      if (idx >= 0) {
-        // increment but respect available
-        if ((this.cart[idx].quantity || 1) < (course.available || Infinity)) {
-          this.cart[idx].quantity = (this.cart[idx].quantity || 1) + 1;
-        } else {
-          this.showToastMsg("No more seats available", "warning");
-          return;
-        }
+      const existing = this.cart.find(c => c._id === course._id);
+      if (existing) {
+        existing.quantity = (existing.quantity || 1) + 1;
       } else {
         this.cart.push({ ...course, quantity: 1 });
       }
@@ -388,86 +365,81 @@ new Vue({
       window.location.href = "cart.html";
     },
 
-    // show toast
-    showToastMsg(msg, type = "") {
+    showToastMsg(msg, type) {
       this.toastMessage = msg;
       this.toastType = type;
       this.showToast = true;
-      setTimeout(() => (this.showToast = false), 2200);
+      setTimeout(() => (this.showToast = false), 2000);
     },
 
-    // Main filtering logic — applied whenever filter inputs change
     filterCourses() {
       let list = [...this.courses];
 
       // Search
-      if (this.searchQuery && this.searchQuery.trim() !== "") {
+      if (this.searchQuery.trim()) {
         const q = this.searchQuery.toLowerCase();
         list = list.filter(c =>
-          (c.title && c.title.toLowerCase().includes(q)) ||
-          (c.instructor && c.instructor.toLowerCase().includes(q)) ||
-          (c.category && c.category.toLowerCase().includes(q))
+          c.title.toLowerCase().includes(q) ||
+          c.instructor.toLowerCase().includes(q)
         );
       }
 
       // Category
-      if (this.selectedCategory && this.selectedCategory !== "") {
-        list = list.filter(c => (c.category || "") === this.selectedCategory);
+      if (this.selectedCategory) {
+        list = list.filter(c => c.category === this.selectedCategory);
       }
 
       // Availability
       if (this.selectedAvailability === "inStock") {
-        list = list.filter(c => Number(c.available || 0) > 0);
-      } else if (this.selectedAvailability === "outOfStock") {
-        list = list.filter(c => Number(c.available || 0) <= 0);
+        list = list.filter(c => c.available > 0);
+      }
+      if (this.selectedAvailability === "outOfStock") {
+        list = list.filter(c => c.available <= 0);
       }
 
       // Location
-      if (this.selectedLocation && this.selectedLocation !== "") {
-        list = list.filter(c => (c.location || "") === this.selectedLocation);
+      if (this.selectedLocation) {
+        list = list.filter(c => c.location === this.selectedLocation);
       }
 
       // Sorting
       if (this.selectedSort === "priceAsc") {
-        list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+        list.sort((a, b) => a.price - b.price);
       } else if (this.selectedSort === "priceDesc") {
-        list.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+        list.sort((a, b) => b.price - a.price);
       } else if (this.selectedSort === "rating") {
-        list.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+        list.sort((a, b) => b.rating - a.rating);
       }
 
-      // set result
       this.filteredCourses = list;
     },
 
-    // used by search button if you have one
-    searchCourses() {
+    applyFilters() {
       this.filterCourses();
-      // if you want to navigate to results url:
-      // window.location.href = `course.html?search=${encodeURIComponent(this.searchQuery)}`;
+      this.closeCatPanel();
     },
 
     clearFilters() {
+      this.searchQuery = "";
       this.selectedCategory = "";
-      this.selectedAvailability = "";
+      this.selectedAvailability = "all";
       this.selectedLocation = "";
       this.selectedSort = "";
-      this.searchQuery = "";
       this.filterCourses();
-      this.showToastMsg("Filters cleared");
+      this.showToastMsg("Filters cleared", "success");
     }
   },
 
   watch: {
-    // watch all filter fields to update results live
-    searchQuery() { this.filterCourses(); },
     selectedCategory() { this.filterCourses(); },
     selectedAvailability() { this.filterCourses(); },
     selectedLocation() { this.filterCourses(); },
-    selectedSort() { this.filterCourses(); }
+    selectedSort() { this.filterCourses(); },
+    searchQuery() { this.filterCourses(); }
   }
 });
 </script>
+
 
 
 </body>
