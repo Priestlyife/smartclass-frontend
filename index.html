@@ -48,12 +48,13 @@
           <ul class="nav-list">
             <li><a href="index.html" class="nav-link active">Home</a></li>
             <li><a href="course.html" class="nav-link">Courses</a></li>
-            <li>
-              <a href="cart.html" class="signup-btn" @click.prevent="goToCart">
-                <i class="fas fa-shopping-cart"></i> Cart
-                <span v-if="cartTotalItems > 0" class="cart-badge">{{ cartTotalItems }}</span>
-              </a>
-            </li>
+            <li v-if="cartTotalItems > 0">
+  <a href="cart.html" class="signup-btn" @click.prevent="goToCart">
+    <i class="fas fa-shopping-cart"></i> Cart
+    <span class="cart-badge">{{ cartTotalItems }}</span>
+  </a>
+</li>
+
           </ul>
         </nav>
       </div>
@@ -131,7 +132,11 @@
       </div>
 
       <div class="course-grid">
-        <div class="course-card" v-for="course in courses" :key="course.id">
+       <div class="course-card"
+     v-for="course in courses"
+     :key="course.id"
+     :class="{ 'sold-out': course.available <= 0 }">
+
           <img :src="course.image" :alt="course.title">
           <div class="info">
             <h3>{{ course.title }}</h3>
@@ -147,17 +152,30 @@
           </div>
 
           <div class="overlay">
-            <h4>{{ course.title }}</h4>
-            <p><strong>Bestseller</strong> • Updated Oct 2025</p>
-            <p>2h • All Levels • Subtitles</p>
-            <ul>
-              <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
-            </ul>
-            <div class="overlay-bottom">
-              <span class="overlay-price">${{ course.price }}</span>
-              <button class="btn-cart" @click="addToCart(course)">Add to Cart</button>
-            </div>
-          </div>
+  <h4>{{ course.title }}</h4>
+  <p><strong>Bestseller</strong> • Updated Oct 2025</p>
+  <p>2h • All Levels • Subtitles</p>
+
+  <!-- 🔥 SHOW REMAINING SEATS -->
+  <p style="margin-top:10px;">🧾 Remaining: <strong>{{ course.available }}</strong></p>
+
+  <ul>
+    <li v-for="detail in course.details" :key="detail">{{ detail }}</li>
+  </ul>
+
+  <div class="overlay-bottom">
+    <span class="overlay-price">${{ course.price }}</span>
+
+    <!-- 🔥 BUTTON AUTO DISABLE WHEN SOLD OUT -->
+    <button class="btn-cart"
+            :disabled="course.available <= 0"
+            @click="addToCart(course)">
+      <span v-if="course.available > 0">Add to Cart</span>
+      <span v-else>Sold Out</span>
+    </button>
+  </div>
+</div>
+
         </div>
       </div>
     </section>
@@ -186,28 +204,58 @@ new Vue({
   },
 
   created() {
-    fetch("http://localhost:5000/api/courses")
-      .then(res => res.json())
-      .then(data => {
-        const cleaned = data.map(c => ({
-          ...c,
-          _id: c._id || c.id,          // ensure consistent id
-          price: Number(c.price || 0), // keep number (not string)
-          rating: Number(c.rating || 0),
-          available: Number(c.available || 0),
-          image: c.image || "https://via.placeholder.com/400x250?text=No+Image"
-        }));
+  console.log("[Index] created() — loading courses");
 
-        // show first 6 courses
-        this.courses = cleaned.slice(0, 6);
-        this.loading = false;
-      })
-      .catch(err => {
-        console.error("Index fetch error:", err);
-        this.showNotification("Failed to load courses", "error");
-        this.loading = false;
-      });
-  },
+  // 1️⃣ Load saved availability
+  const savedCourses = JSON.parse(localStorage.getItem("courses") || "[]");
+
+  if (savedCourses.length > 0) {
+    console.log("[Index] Loaded saved availability");
+    // Only show first 6 on index
+    this.courses = savedCourses.slice(0, 6);
+    this.loading = false;
+  }
+
+  // 2️⃣ Fetch fresh courses from backend
+  fetch("http://localhost:5000/api/courses")
+    .then(res => res.json())
+    .then(data => {
+      console.log("[Index] Fetched fresh courses from backend");
+
+      let cleaned = data.map(c => ({
+        ...c,
+        _id: c._id || c.id,
+        price: Number(c.price || 0),
+        rating: Number(c.rating || 0),
+        available: Number(c.available || 0),
+        maxAvailable: Number(c.available || 0),
+        image: c.image || "https://via.placeholder.com/400x250?text=No+Image"
+      }));
+
+      // 3️⃣ Merge saved availability
+      if (savedCourses.length > 0) {
+        const map = {};
+        savedCourses.forEach(c => {
+          map[c._id] = c.available;
+        });
+
+        cleaned = cleaned.map(c => {
+          if (map[c._id] !== undefined) {
+            return { ...c, available: map[c._id] };
+          }
+          return c;
+        });
+      }
+
+      // 4️⃣ Save merged courses for syncing
+      localStorage.setItem("courses", JSON.stringify(cleaned));
+
+      // 5️⃣ Show only 6 on homepage
+      this.courses = cleaned.slice(0, 6);
+      this.loading = false;
+    })
+    .catch(err => console.error("[Index] fetch error:", err));
+},
 
   computed: {
     cartTotalItems() {
@@ -237,27 +285,54 @@ new Vue({
     },
 
     goToCart() {
-      window.location.href = "cart.html";
-    },
+  if (!this.cart || this.cart.length === 0) {
+    this.showToastMsg("Your cart is empty", "error");
+    return;
+  }
+
+  // If you want it to go to the CART:
+  window.location.href = "cart.html";
+
+  // If you want it to go back home instead, replace with:
+  // window.location.href = "index.html";
+},
+
 
     addToCart(course) {
-      const id = course._id; // always use consistent id
-      const index = this.cart.findIndex(c => c._id === id);
+  const courseId = course._id || course.id;
 
-      if (index >= 0) {
-        if (this.cart[index].quantity < course.available) {
-          this.cart[index].quantity++;
-        } else {
-          this.showNotification("No more available", "error");
-          return;
-        }
-      } else {
-        this.cart.push({ ...course, quantity: 1 });
-      }
+  const maxAvailable = course.maxAvailable;   // 🔥 original total
+  const currentAvailable = course.available;   // 🔥 seats left
+  const cartItem = this.cart.find(it => (it._id || it.id) === courseId);
 
-      localStorage.setItem("cart", JSON.stringify(this.cart));
-      this.showNotification("Added to cart");
+  // ❌ If no seats left
+  if (currentAvailable <= 0) {
+    this.showNotification("Sold Out", "error");
+    return;
+  }
+
+  if (cartItem) {
+    const qty = cartItem.quantity;
+
+    if (qty >= maxAvailable) {
+      this.showNotification("No more seats available", "error");
+      return;
     }
+
+    cartItem.quantity++;
+    course.available = maxAvailable - cartItem.quantity;
+  } else {
+    this.cart.push({ ...course, quantity: 1 });
+    course.available = maxAvailable - 1;
+  }
+
+  // Save both
+  localStorage.setItem("cart", JSON.stringify(this.cart));
+  localStorage.setItem("courses", JSON.stringify(this.courses));
+
+  this.showNotification("Added to cart", "success");
+},
+
   }
 });
 </script>

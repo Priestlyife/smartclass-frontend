@@ -316,6 +316,18 @@ nav .nav-list a.active {
   color: #4c51bf;
   margin-top: 8px;
 }
+/* 🔥 SOLD OUT EFFECT (same as course page style) */
+.course-card.sold-out {
+  filter: grayscale(80%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.course-card.sold-out .btn-cart {
+  background: #777 !important;
+  cursor: not-allowed !important;
+}
+
 /* Availability & Location */
 .course-extra {
   font-size: 13px;

@@ -217,10 +217,11 @@
           <li><a href="index.html" class="nav-link">Home</a></li>
           <li><a href="course.html" class="nav-link">Courses</a></li>
           <li>
-            <a href="cart.html" class="signup-btn">
-              <i class="fas fa-shopping-cart"></i> Cart
-              <span v-if="totalItems > 0" class="cart-badge">{{ totalItems }}</span>
-            </a>
+            <a href="#" class="signup-btn" @click.prevent="goHomeFromCart">
+  <i class="fas fa-shopping-cart"></i> Cart
+  <span v-if="totalItems > 0" class="cart-badge">{{ totalItems }}</span>
+</a>
+
           </li>
         </ul>
       </nav>
@@ -242,7 +243,8 @@
           <div class="cart-info">
             <h3>{{ item.title }}</h3>
             <p>{{ item.category }} • {{ item.instructor }}</p>
-            <p>📍 {{ item.location }} • 🧾 Available: {{ item.available }}</p>
+            <p>📍 {{ item.location }} • 🧾 Available: {{ getCurrentAvailability(item._id) }}</p>
+
           </div>
         </div>
 
@@ -294,47 +296,94 @@ new Vue({
     }
   },
   methods: {
-    increaseQty(index) {
-      const item = this.cart[index];
-      if (item.quantity < item.available) {
-        item.quantity++;
-        this.saveCart();
-      } else {
-        this.showNotification(`Only ${item.available} available for ${item.title}.`, 'error');
-      }
-    },
-    decreaseQty(index) {
-      const item = this.cart[index];
-      if (item.quantity > 1) {
-        item.quantity--;
-        this.saveCart();
-      } else {
-        this.removeItem(index);
-      }
-    },
-    removeItem(index) {
-      const removedCourse = this.cart[index].title;
-      this.cart.splice(index, 1);
+
+  // 🔥 NEW — always get up-to-date availability
+  getCurrentAvailability(id) {
+    const courses = JSON.parse(localStorage.getItem("courses") || "[]");
+    const c = courses.find(x => x._id === id);
+    return c ? c.available : 0;
+  },
+
+  // 🔥 FIXED — add quantity (+)
+  increaseQty(index) {
+    const item = this.cart[index];
+
+    let courses = JSON.parse(localStorage.getItem("courses") || "[]");
+    const cIndex = courses.findIndex(c => c._id === item._id);
+
+    if (cIndex >= 0 && courses[cIndex].available > 0) {
+      item.quantity++;
+      courses[cIndex].available--;
+      localStorage.setItem("courses", JSON.stringify(courses));
       this.saveCart();
-      this.showNotification(`${removedCourse} removed from cart.`, 'error');
-    },
-    saveCart() {
-      localStorage.setItem('cart', JSON.stringify(this.cart));
-    },
-    goToCheckout() {
-      if (this.cart.length === 0) {
-        this.showNotification('Your cart is empty.', 'error');
-        return;
-      }
-      window.location.href = 'checkout.html';
-    },
-    showNotification(message, type = '') {
-      this.toastMessage = message;
-      this.toastType = type;
-      this.showToast = true;
-      setTimeout(() => { this.showToast = false; }, 3000);
+    } else {
+      this.showNotification("No more seats available", "error");
     }
   },
+
+  // 🔥 FIXED — reduce quantity (−)
+  decreaseQty(index) {
+    const item = this.cart[index];
+
+    let courses = JSON.parse(localStorage.getItem("courses") || "[]");
+    const cIndex = courses.findIndex(c => c._id === item._id);
+
+    if (cIndex >= 0) {
+      courses[cIndex].available++;
+    }
+
+    item.quantity--;
+
+    localStorage.setItem("courses", JSON.stringify(courses));
+
+    if (item.quantity === 0) {
+      this.removeItem(index);
+    } else {
+      this.saveCart();
+    }
+  },
+
+  // 🔥 FIXED — remove full course
+  removeItem(index) {
+    const item = this.cart[index];
+
+    let courses = JSON.parse(localStorage.getItem("courses") || "[]");
+    const cIndex = courses.findIndex(c => c._id === item._id);
+
+    if (cIndex >= 0) {
+      courses[cIndex].available += item.quantity;
+      localStorage.setItem("courses", JSON.stringify(courses));
+    }
+
+    this.cart.splice(index, 1);
+    this.saveCart();
+    this.showNotification(item.title + " removed from cart.", "error");
+  },
+
+  saveCart() {
+    localStorage.setItem('cart', JSON.stringify(this.cart));
+  },
+
+  goToCheckout() {
+    if (this.cart.length === 0) {
+      this.showNotification('Your cart is empty.', 'error');
+      return;
+    }
+    window.location.href = 'checkout.html';
+  },
+
+  showNotification(message, type = '') {
+    this.toastMessage = message;
+    this.toastType = type;
+    this.showToast = true;
+    setTimeout(() => { this.showToast = false; }, 3000);
+  },
+  goHomeFromCart() {
+  window.location.href = "index.html";
+}
+
+},
+
   mounted() {
     const storedCart = localStorage.getItem('cart');
     if (storedCart) {

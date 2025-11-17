@@ -265,6 +265,19 @@ body {
   margin-bottom: 10px;
 }
 
+/* SOLD OUT STYLE */
+.course-card.sold-out {
+  opacity: 0.55;
+  filter: grayscale(0.3);
+}
+
+.course-card .btn-cart[disabled] {
+  background: #999 !important;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+
 /* ============================================================
    OVERLAY — MATCHES INDEX PAGE EXACTLY
 ============================================================ */

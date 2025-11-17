@@ -27,12 +27,13 @@
           <ul class="nav-list">
             <li><a href="index.html" class="nav-link">Home</a></li>
             <li><a href="course.html" class="nav-link active">Courses</a></li>
-            <li>
-              <a href="cart.html" class="signup-btn" @click.prevent="goToCart">
-                <i class="fas fa-shopping-cart"></i> Cart
-                <span v-if="cartTotalItems > 0" class="cart-badge">{{ cartTotalItems }}</span>
-              </a>
-            </li>
+            <li v-if="cartTotalItems > 0">
+  <a href="cart.html" class="signup-btn" @click.prevent="goToCart">
+    <i class="fas fa-shopping-cart"></i> Cart
+    <span class="cart-badge">{{ cartTotalItems }}</span>
+  </a>
+</li>
+
           </ul>
         </nav>
       </div>
@@ -146,7 +147,9 @@
   <!-- Show ALL courses when loaded -->
   <div v-else class="course-grid">
 
-    <div class="course-card" v-for="course in filteredCourses" :key="course.id">
+    <div class="course-card" 
+     :class="{ 'sold-out': course.available <= 0 }"
+     v-for="course in filteredCourses" :key="course._id">
 
       <img :src="course.image" :alt="course.title">
 
@@ -167,20 +170,27 @@
       <!-- CORRECT OVERLAY (ONLY ONE) -->
       <div class="overlay">
         <div class="overlay-left">
-          <h4>{{ course.title }}</h4>
-          <p><strong>Bestseller</strong> • Updated Oct 2025</p>
-          <p>2h • All Levels • Subtitles</p>
-          <ul>
-            <li v-for="(d, i) in course.details" :key="i">{{ d }}</li>
-          </ul>
-        </div>
+  <h4>{{ course.title }}</h4>
+  <p><strong>Bestseller</strong> • Updated Oct 2025</p>
+  <p>2h • All Levels • Subtitles</p>
+
+  <!-- NEW -->
+  <p>🧾 Remaining: <strong>{{ course.available }}</strong></p>
+
+  <ul>
+    <li v-for="(d, i) in course.details" :key="i">{{ d }}</li>
+  </ul>
+</div>
 
         <div class="overlay-bottom">
           <span class="overlay-price">${{ formatPrice(course.price) }}</span>
-          <button class="btn-cart" @click="addToCart(course)" :disabled="isAtMax(course)">
-            <span v-if="!isAtMax(course)">Add to Cart</span>
-            <span v-else>Sold Out</span>
-          </button>
+          <button class="btn-cart"
+        :disabled="course.available <= 0"
+        @click="addToCart(course)">
+  <span v-if="course.available > 0">Add to Cart</span>
+  <span v-else>Sold Out</span>
+</button>
+
         </div>
       </div>
 
@@ -246,8 +256,36 @@ new Vue({
           price: Number(c.price || 0),
           rating: Number(c.rating || 0),
           available: Number(c.available || 0),
+maxAvailable: Number(c.available || 0),   // 🔥 NEW original availability
+
           image: c.image && c.image.includes("http") ? c.image : "https://via.placeholder.com/400x250?text=No+Image"
         }));
+        // 🔥 Merge with saved availability in localStorage
+const savedCourses = localStorage.getItem("courses");
+
+if (savedCourses) {
+  try {
+    const saved = JSON.parse(savedCourses);
+    const map = {};
+    saved.forEach(c => map[c._id || c.id] = c.available);
+
+    // apply saved availability
+    this.courses = this.courses.map(c => {
+      const id = c._id || c.id;
+      if (map[id] !== undefined) {
+        return { ...c, available: Number(map[id]) };
+      }
+      return c;
+    });
+  } catch (e) {
+    console.warn("Error reading saved availability:", e);
+  }
+}
+
+// Save updated list back
+localStorage.setItem("courses", JSON.stringify(this.courses));
+
+        
         this.filteredCourses = [...this.courses];
         this.categories = Array.from(new Set(this.courses.map(c => c.category || "Other"))).sort();
         this.locations = Array.from(new Set(this.courses.map(c => c.location || "Unknown"))).sort();
@@ -317,29 +355,59 @@ new Vue({
 
     // cart functions
     addToCart(course) {
-      try {
-        const idx = this.cart.findIndex(it => it._id === course._id || it.id === course.id);
-        if (idx >= 0) {
-          // respect available seats
-          if ((this.cart[idx].quantity || 1) < (course.available || Infinity)) {
-            this.cart[idx].quantity = (this.cart[idx].quantity || 1) + 1;
-          } else {
-            this.showToastMsg("No more seats available", "warning");
-            return;
-          }
-        } else {
-          this.cart.push({ ...course, quantity: 1 });
-        }
-        localStorage.setItem("cart", JSON.stringify(this.cart));
-        this.showToastMsg("Added to cart", "success");
-      } catch (e) {
-        console.error("addToCart error", e);
-      }
-    },
+  const courseId = course._id || course.id;
+
+  const maxAvailable = course.maxAvailable; // 🔥 original seats
+  const currentAvailable = course.available; // 🔥 seats left
+  const cartItem = this.cart.find(it => (it._id || it.id) === courseId);
+
+  // ❌ If no more seats left
+  if (currentAvailable <= 0) {
+    this.showToastMsg("Sold Out", "error");
+    return;
+  }
+
+  if (cartItem) {
+    // qty already in cart
+    const currentQty = cartItem.quantity;
+
+    if (currentQty >= maxAvailable) {
+      this.showToastMsg("No more seats available", "warning");
+      return;
+    }
+
+    // increase qty
+    cartItem.quantity++;
+    course.available = maxAvailable - cartItem.quantity;
+  } else {
+    // first time adding
+    this.cart.push({ ...course, quantity: 1 });
+    course.available = maxAvailable - 1;
+  }
+
+  // save both cart and courses
+  localStorage.setItem("cart", JSON.stringify(this.cart));
+  localStorage.setItem("courses", JSON.stringify(this.courses));
+
+  this.showToastMsg("Added to cart", "success");
+},
+
+
+
 
     goToCart() {
-      window.location.href = "cart.html";
-    },
+  if (!this.cart || this.cart.length === 0) {
+    this.showToastMsg("Your cart is empty", "error");
+    return;
+  }
+
+  // If you want it to go to the CART:
+  window.location.href = "cart.html";
+
+  // If you want it to go back home instead, replace with:
+  // window.location.href = "index.html";
+},
+
 
     showToastMsg(msg, type = "") {
       this.toastMessage = msg;
@@ -370,14 +438,35 @@ new Vue({
 
         let list = [...this.courses];
 
-        // Search (title / instructor)
-        if (this.searchQuery && this.searchQuery.trim() !== "") {
-          const q = this.searchQuery.toLowerCase();
-          list = list.filter(c =>
-            (c.title && c.title.toLowerCase().includes(q)) ||
-            (c.instructor && c.instructor.toLowerCase().includes(q))
-          );
-        }
+        // ADVANCED SEARCH: title, category, instructor, location, price, availability
+if (this.searchQuery && this.searchQuery.trim() !== "") {
+  const q = this.searchQuery.toLowerCase();
+
+  list = list.filter(c => {
+    return (
+      // Title
+      (c.title && c.title.toLowerCase().includes(q)) ||
+
+      // Instructor
+      (c.instructor && c.instructor.toLowerCase().includes(q)) ||
+
+      // Category
+      (c.category && c.category.toLowerCase().includes(q)) ||
+
+      // Location
+      (c.location && c.location.toLowerCase().includes(q)) ||
+
+      // Search by Price
+      c.price.toString().includes(q) ||
+
+      // Search by availability
+      (q === "available" && c.available > 0) ||
+      (q === "unavailable" && c.available <= 0) ||
+      (q === "sold out" && c.available <= 0)
+    );
+  });
+}
+
 
         // Category
         if (this.selectedCategory) {
