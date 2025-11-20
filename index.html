@@ -217,7 +217,7 @@ new Vue({
   }
 
   // 2️⃣ Fetch fresh courses from backend
-  fetch("http://localhost:5000/api/courses")
+  fetch("https://smartclass-backend-vlj4.onrender.com/api/courses")
     .then(res => res.json())
     .then(data => {
       console.log("[Index] Fetched fresh courses from backend");

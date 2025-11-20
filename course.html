@@ -45,86 +45,80 @@
       <p>Browse our complete collection of high-quality learning programs designed for your growth.</p>
     </section>
 
-    <!-- Filter & Search Bar -->
     <section class="courses-header-bar">
-      <div class="filter-toolbar" role="toolbar" aria-label="Course filters" style="position:relative;">
-        <div class="left-controls">
-          <!-- Categories button which opens the panel -->
-          <div style="position:relative;">
-            <button class="cat-btn" @click="toggleCatPanel" :aria-expanded="catPanelOpen">
-              <i class="fas fa-filter"></i> Categories
-              <i :class="['fas', catPanelOpen ? 'fa-chevron-up' : 'fa-chevron-down']" style="margin-left:auto;"></i>
-            </button>
+  <div class="filter-toolbar">
 
-            <!-- The panel that appears when Categories clicked -->
-            <div v-if="catPanelOpen" class="cat-panel" @click.stop>
-              <div class="row">
-                <label>Category</label>
-                <select v-model="selectedCategory">
-                  <option value="">All Categories</option>
-                  <option v-for="cat in categories" :key="cat">{{ cat }}</option>
-                </select>
-              </div>
+    <!-- LEFT SIDE = SORT PANEL BUTTON -->
+    <div class="sort-wrapper">
+      <button class="cat-btn" @click="toggleCatPanel">
+        <i class="fas fa-sort"></i> Sort By
+      </button>
 
-              <div class="row">
-                <label>Availability</label>
-                <select v-model="selectedAvailability">
-                  <option value="">All</option>
-                  <option value="available">Available</option>
-                  <option value="unavailable">Unavailable</option>
-                </select>
-              </div>
-
-              <div class="row">
-                <label>Price</label>
-                <select v-model="selectedPriceSort">
-                  <option value="">None</option>
-                  <option value="priceLow">Low → High</option>
-                  <option value="priceHigh">High → Low</option>
-                </select>
-              </div>
-
-              <div class="row">
-                <label>Rating</label>
-                <select v-model="selectedRatingSort">
-                  <option value="">None</option>
-                  <option value="ratingDesc">Top Rated</option>
-                </select>
-              </div>
-
-              <div class="row">
-                <label>Location</label>
-                <select v-model="selectedLocation">
-                  <option value="">All Locations</option>
-                  <option v-for="loc in locations" :key="loc">{{ loc }}</option>
-                </select>
-              </div>
-
-              <div style="display:flex; gap:8px; margin-top:8px; justify-content:flex-end;">
-                <button class="clear-btn" @click="clearCatPanel">Reset</button>
-                <button class="search-btn" @click="closeCatPanel">Apply</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- (Optional) quick sort select kept visible -->
-          <select v-model="selectedSort" class="filter-select" aria-label="Sort courses">
-            <option value="">Sort By</option>
-            <option value="rating">Best Rating</option>
-            <option value="priceLow">Price: Low to High</option>
-            <option value="priceHigh">Price: High to Low</option>
+      <!-- Panel -->
+      <div v-if="catPanelOpen" class="cat-panel" @click.stop>
+        <div class="row">
+          <label>Category</label>
+          <select v-model="selectedCategory">
+            <option value="">All Categories</option>
+            <option v-for="cat in categories" :key="cat">{{ cat }}</option>
           </select>
         </div>
 
-        <div class="right-controls">
-          <div style="display:flex;align-items:center;">
-            <input class="search-input" type="text" placeholder="Search for a course..." v-model="searchQuery" @keyup.enter="searchCourses" aria-label="Search courses">
-            <button class="search-btn" @click="searchCourses" aria-label="Search">Search</button>
-          </div>
-          <button class="clear-btn" @click="clearFilters" aria-label="Clear filters">Clear</button>
+        <div class="row">
+          <label>Availability</label>
+          <select v-model="selectedAvailability">
+            <option value="">All</option>
+            <option value="available">Available</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>Price</label>
+          <select v-model="selectedPriceSort">
+            <option value="">None</option>
+            <option value="priceLow">Low → High</option>
+            <option value="priceHigh">High → Low</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>Rating</label>
+          <select v-model="selectedRatingSort">
+            <option value="">None</option>
+            <option value="ratingDesc">Top Rated</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>Location</label>
+          <select v-model="selectedLocation">
+            <option value="">All Locations</option>
+            <option v-for="loc in locations" :key="loc">{{ loc }}</option>
+          </select>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:8px; justify-content:flex-end;">
+          <button class="clear-btn" @click="clearCatPanel">Reset</button>
+          <button class="search-btn" @click="closeCatPanel">Apply</button>
         </div>
       </div>
-    </section>
+    </div>
+
+    <!-- RIGHT SIDE = SEARCH BAR -->
+    <div class="right-controls">
+      <div style="display:flex; align-items:center;">
+        <input class="search-input" type="text" placeholder="Search for a course..."
+          v-model="searchQuery" @keyup.enter="searchCourses">
+        <button class="search-btn" @click="searchCourses">Search</button>
+      </div>
+
+      <button class="clear-btn" @click="clearFilters">Clear</button>
+    </div>
+
+  </div>
+</section>
+
 
     <!-- Search Result Info -->
     <div v-if="searchQuery.trim() !== ''" class="search-meta">
@@ -241,7 +235,8 @@ new Vue({
 
   created() {
     console.log("[SmartClass] created() — start fetch");
-    const url = "http://localhost:5000/api/courses";
+    const url =  "https://smartclass-backend-vlj4.onrender.com/api/courses";
+;
     fetch(url)
       .then(res => {
         console.log("[SmartClass] fetch status:", res.status);

@@ -172,7 +172,7 @@ new Vue({
     loading: true
   },
   created() {
-    fetch("http://localhost:5000/api/orders")
+    fetch("https://smartclass-backend-vlj4.onrender.com/api/orders")
       .then(res => res.json())
       .then(data => {
         this.orders = data.reverse(); // newest first

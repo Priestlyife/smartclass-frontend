@@ -339,6 +339,7 @@ new Vue({
   // ---------- PREPARE ORDER DATA ----------
   const orderData = {
     customerName: this.order.firstName + " " + this.order.lastName,
+    phone: this.order.phone,
     email: this.order.email,
     address: this.order.address + ", " + this.order.city + ", " + this.order.state,
     items: this.cart,
@@ -349,7 +350,7 @@ new Vue({
   };
 
   // ---------- SEND TO BACKEND ----------
-  fetch("http://localhost:5000/api/orders", {
+  fetch("https://smartclass-backend-vlj4.onrender.com/api/orders", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(orderData)

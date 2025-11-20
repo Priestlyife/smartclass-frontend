@@ -103,7 +103,10 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 14px;
+  position: relative;        
+  overflow: visible !important;  
 }
+
 
 .left-controls,
 .right-controls {
@@ -111,6 +114,24 @@ body {
   align-items: center;
   gap: 12px;
 }
+.sort-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.cat-panel {
+  position: absolute;
+  top: 100%;      /* ⬇️ Shows panel below the Sort By button */
+  left: 0;
+  width: 320px;
+  background: #fff;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  z-index: 50;
+  margin-top: 8px; /* small spacing */
+}
+
 
 /* Dropdown Buttons */
 .filter-select,
