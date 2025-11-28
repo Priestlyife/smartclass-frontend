@@ -379,8 +379,15 @@ new Vue({
     setTimeout(() => { this.showToast = false; }, 3000);
   },
   goHomeFromCart() {
-  window.location.href = "index.html";
+  // If user came from course page
+  if (document.referrer.includes("course.html")) {
+    window.location.href = "course.html";
+  } else {
+    // Default fallback
+    window.location.href = "course.html";
+  }
 }
+
 
 },
 
