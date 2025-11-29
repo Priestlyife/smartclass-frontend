@@ -217,7 +217,8 @@
           <li><a href="index.html" class="nav-link">Home</a></li>
           <li><a href="course.html" class="nav-link">Courses</a></li>
           <li>
-            <a href="#" class="signup-btn" @click.prevent="goHomeFromCart">
+            <a class="signup-btn" style="cursor:pointer;" @click="goHomeFromCart">
+
   <i class="fas fa-shopping-cart"></i> Cart
   <span v-if="totalItems > 0" class="cart-badge">{{ totalItems }}</span>
 </a>
