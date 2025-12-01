@@ -216,12 +216,12 @@ new Vue({
     filteredCourses: [],
     searchQuery: "",
     selectedCategory: "",
-    // note: HTML panel uses "available" / "unavailable"
+   
     selectedAvailability: "",
     selectedLocation: "",
-    // quick sort (top-right) uses "rating", "priceLow", "priceHigh"
+    
     selectedSort: "",
-    // panel-specific sorts used in your HTML
+   
     selectedPriceSort: "",
     selectedRatingSort: "",
     catPanelOpen: false,
@@ -251,11 +251,11 @@ new Vue({
           price: Number(c.price || 0),
           rating: Number(c.rating || 0),
           available: Number(c.available || 0),
-maxAvailable: Number(c.available || 0),   // 🔥 NEW original availability
+maxAvailable: Number(c.available || 0),   
 
           image: c.image && c.image.includes("http") ? c.image : "https://via.placeholder.com/400x250?text=No+Image"
         }));
-        // 🔥 Merge with saved availability in localStorage
+        // Merge with saved availability in localStorage
 const savedCourses = localStorage.getItem("courses");
 
 if (savedCourses) {
@@ -324,16 +324,16 @@ localStorage.setItem("courses", JSON.stringify(this.courses));
       this.selectedPriceSort = "";
       this.selectedRatingSort = "";
       this.selectedLocation = "";
-      // apply reset immediately
+      
       this.filterCourses();
       this.showToastMsg("Category filters reset", "success");
     },
 
     // Search triggered by search button / Enter
     searchCourses() {
-      // if on this page already, just filter; if from index we set searchQuery and redirected here
+      
       if (!this.searchQuery || this.searchQuery.trim() === "") {
-        // if empty, show all
+       
         this.filterCourses();
         this.showToastMsg("Showing all courses", "info");
         return;
@@ -352,8 +352,8 @@ localStorage.setItem("courses", JSON.stringify(this.courses));
     addToCart(course) {
   const courseId = course._id || course.id;
 
-  const maxAvailable = course.maxAvailable; // 🔥 original seats
-  const currentAvailable = course.available; // 🔥 seats left
+  const maxAvailable = course.maxAvailable; 
+  const currentAvailable = course.available; 
   const cartItem = this.cart.find(it => (it._id || it.id) === courseId);
 
   // ❌ If no more seats left
@@ -399,8 +399,6 @@ localStorage.setItem("courses", JSON.stringify(this.courses));
   // If you want it to go to the CART:
   window.location.href = "cart.html";
 
-  // If you want it to go back home instead, replace with:
-  // window.location.href = "index.html";
 },
 
 
@@ -411,14 +409,14 @@ localStorage.setItem("courses", JSON.stringify(this.courses));
       setTimeout(() => (this.showToast = false), 2000);
     },
 
-    // used in template to disable add button if already at max
+    
     isAtMax(course) {
       const item = this.cart.find(c => (c._id && c._id === course._id) || (c.id && c.id === course.id));
       if (!item) return false;
       return (item.quantity || 1) >= (course.available || 0);
     },
 
-    // MAIN FILTER LOGIC - respects both panel sorts and quick sort
+    
     filterCourses() {
       try {
         console.log("[SmartClass] filterCourses:", {

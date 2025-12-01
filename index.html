@@ -156,7 +156,7 @@
   <p><strong>Bestseller</strong> • Updated Oct 2025</p>
   <p>2h • All Levels • Subtitles</p>
 
-  <!-- 🔥 SHOW REMAINING SEATS -->
+  <!--  SHOW REMAINING SEATS -->
   <p style="margin-top:10px;">🧾 Remaining: <strong>{{ course.available }}</strong></p>
 
   <ul>
@@ -166,7 +166,7 @@
   <div class="overlay-bottom">
     <span class="overlay-price">${{ course.price }}</span>
 
-    <!-- 🔥 BUTTON AUTO DISABLE WHEN SOLD OUT -->
+    <!-- BUTTON AUTO DISABLE WHEN SOLD OUT -->
     <button class="btn-cart"
             :disabled="course.available <= 0"
             @click="addToCart(course)">
@@ -206,17 +206,17 @@ new Vue({
   created() {
   console.log("[Index] created() — loading courses");
 
-  // 1️⃣ Load saved availability
+  //  Load saved availability
   const savedCourses = JSON.parse(localStorage.getItem("courses") || "[]");
 
   if (savedCourses.length > 0) {
     console.log("[Index] Loaded saved availability");
-    // Only show first 6 on index
+  
     this.courses = savedCourses.slice(0, 6);
     this.loading = false;
   }
 
-  // 2️⃣ Fetch fresh courses from backend
+  //  Fetch fresh courses from backend
   fetch("https://smartclass-backend-vlj4.onrender.com/api/courses")
     .then(res => res.json())
     .then(data => {
@@ -232,7 +232,7 @@ new Vue({
         image: c.image || "https://via.placeholder.com/400x250?text=No+Image"
       }));
 
-      // 3️⃣ Merge saved availability
+      //  Merge saved availability
       if (savedCourses.length > 0) {
         const map = {};
         savedCourses.forEach(c => {
@@ -247,10 +247,10 @@ new Vue({
         });
       }
 
-      // 4️⃣ Save merged courses for syncing
+      //  Save merged courses for syncing
       localStorage.setItem("courses", JSON.stringify(cleaned));
 
-      // 5️⃣ Show only 6 on homepage
+      //Show only 6 on homepage
       this.courses = cleaned.slice(0, 6);
       this.loading = false;
     })
@@ -293,16 +293,14 @@ new Vue({
   // If you want it to go to the CART:
   window.location.href = "cart.html";
 
-  // If you want it to go back home instead, replace with:
-  // window.location.href = "index.html";
 },
 
 
     addToCart(course) {
   const courseId = course._id || course.id;
 
-  const maxAvailable = course.maxAvailable;   // 🔥 original total
-  const currentAvailable = course.available;   // 🔥 seats left
+  const maxAvailable = course.maxAvailable;   
+  const currentAvailable = course.available;   
   const cartItem = this.cart.find(it => (it._id || it.id) === courseId);
 
   // ❌ If no seats left

@@ -288,6 +288,7 @@ new Vue({
     showToast: false,
     toastType: ''
   },
+  // shopping cart 
   computed: {
     totalItems() {
       return this.cart.reduce((sum, i) => sum + (i.quantity || 0), 0);
@@ -298,14 +299,14 @@ new Vue({
   },
   methods: {
 
-  // 🔥 NEW — always get up-to-date availability
+  //  always get up-to-date availability
   getCurrentAvailability(id) {
     const courses = JSON.parse(localStorage.getItem("courses") || "[]");
     const c = courses.find(x => x._id === id);
     return c ? c.available : 0;
   },
 
-  // 🔥 FIXED — add quantity (+)
+  //  add quantity (+)
   increaseQty(index) {
     const item = this.cart[index];
 
@@ -322,7 +323,7 @@ new Vue({
     }
   },
 
-  // 🔥 FIXED — reduce quantity (−)
+  // reduce quantity (−)
   decreaseQty(index) {
     const item = this.cart[index];
 
@@ -344,7 +345,7 @@ new Vue({
     }
   },
 
-  // 🔥 FIXED — remove full course
+  //  remove full course
   removeItem(index) {
     const item = this.cart[index];
 
